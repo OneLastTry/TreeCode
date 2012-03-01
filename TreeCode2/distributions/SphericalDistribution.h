@@ -46,7 +46,6 @@ public:
 	 * @return		Random point within the specified n-sphere.
 	 */
 	Vec getVector(RNG& rng) const{
-		using boost::random::uniform_real_distribution;
 		Vec v(dims_);
 		do{
 			for(unsigned int i = 0; i < dims_; i++)

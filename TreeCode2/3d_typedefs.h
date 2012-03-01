@@ -53,12 +53,12 @@ typedef InterpolatedEwaldSum<Vec,Mat>						InterpolatedEwaldSum3d;
 }
 
 namespace distribution{
-typedef UniformDistribution<boost::random::mt19937, Vec> 	UniformDistribution3d;
-typedef SphericalDistribution<boost::random::mt19937, Vec>	SphericalDistribution3d;
-typedef ConstDistribution<boost::random::mt19937, Vec>		ConstDistribution3d;
-typedef MaxwellDistribution<boost::random::mt19937, Vec>	MaxwellDistribution3d;
-typedef SinusoidalDistribution<boost::random::mt19937, Vec>	SinusoidalDistribution3d;
-typedef ConstantChargeDistribution<boost::random::mt19937>	ConstantChargeDistribution3d;
+typedef UniformDistribution<boost::mt19937, Vec> 	UniformDistribution3d;
+typedef SphericalDistribution<boost::mt19937, Vec>	SphericalDistribution3d;
+typedef ConstDistribution<boost::mt19937, Vec>		ConstDistribution3d;
+typedef MaxwellDistribution<boost::mt19937, Vec>	MaxwellDistribution3d;
+typedef SinusoidalDistribution<boost::mt19937, Vec>	SinusoidalDistribution3d;
+typedef ConstantChargeDistribution<boost::mt19937>	ConstantChargeDistribution3d;
 }
 
 }

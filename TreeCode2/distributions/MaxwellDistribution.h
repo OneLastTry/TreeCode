@@ -35,7 +35,7 @@ public:
 	 * @return	Vectors following Maxwell Distribution.
 	 */
 	virtual Vec getVector(RNG& rng) const {
-		boost::random::normal_distribution<double> dist(0.0, sqrt(temperature_ / mass_));
+		boost::normal_distribution<double> dist(0.0, sqrt(temperature_ / mass_));
 		Vec v;
 
 		for (unsigned int j = 0; j < v.rows(); j++)

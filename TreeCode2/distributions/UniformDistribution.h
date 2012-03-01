@@ -34,7 +34,7 @@ public:
 	 * @return	Randomly distributed vector.
 	 */
 	virtual Vec getVector(RNG& rng) const  {
-		boost::random::uniform_01<double> dist;
+		boost::uniform_01<double> dist;
 		Vec v;
 		for (unsigned int j = 0; j < v.rows(); j++) {
 			v[j] = dist(rng) * (maximum[j] - minimum[j]) + minimum[j];
