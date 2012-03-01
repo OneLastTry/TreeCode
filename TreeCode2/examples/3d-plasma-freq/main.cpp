@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
 	using namespace treecode::potentials;
 	using namespace treecode::pusher;
 
-	using boost::random::mt19937;
+	using boost::mt19937;
 	mt19937 rng;
 
 	double length, wavelengths, proportion;
