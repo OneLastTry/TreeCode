@@ -47,7 +47,6 @@ Configuration3d parse_cmd_line(int argc, char **argv, double& length, unsigned i
 	    ("theta,t", 			po::value<double>(&theta), "Theta (MAC)")
 	    ("param,p", 			po::value<double>(&param), "Plasma parameter (bigger implies more ideal)")
 	    ("number,n", 			po::value<unsigned int>(&num_parts), "Number of each species")
-	    ("database,b", 			po::value<std::string>(&dbname), "Database file name")
 	    ("temperature,T", 		po::value<double>(&temperature), "Temperature of plasma")
 	;
 
@@ -55,7 +54,7 @@ Configuration3d parse_cmd_line(int argc, char **argv, double& length, unsigned i
 	po::store(po::parse_command_line(argc, argv, desc), vm);
 	po::notify(vm);
 
-	if (vm.count("help") || vm.size() != 8) {
+	if (vm.count("help") || vm.size() != desc.options().size() - 1) {
 	    cerr << desc << endl;
 	    cerr << "All options must be specified!" << endl;
 	    exit(1);

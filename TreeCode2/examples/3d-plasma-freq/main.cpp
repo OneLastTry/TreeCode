@@ -65,7 +65,6 @@ int main(int argc, char **argv) {
 	using namespace treecode::distribution;
 	using namespace treecode::potentials;
 	using namespace treecode::pusher;
-	using namespace treecode::output;
 
 	using boost::random::mt19937;
 	mt19937 rng;

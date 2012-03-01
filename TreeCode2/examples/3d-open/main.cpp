@@ -42,7 +42,6 @@ Configuration3d parse_cmd_line(int argc, char **argv, double& radius, unsigned i
 	    ("theta,t", 			po::value<double>(&theta), "Theta (MAC)")
 	    ("param,p", 			po::value<double>(&param), "Plasma parameter (bigger implies more ideal)")
 	    ("number,n", 			po::value<unsigned int>(&num_parts), "Number of each species")
-	    ("database,b", 			po::value<std::string>(&dbname), "Database file name")
 	;
 
 	po::variables_map vm;
@@ -72,7 +71,7 @@ int main(int argc, char **argv) {
 	std::string dbname;
 	Configuration3d c = parse_cmd_line(argc, argv, radius, num_particles, dbname);
 
-	SpherialDistribution3d			position_dist(3, Vec::Zero(), radius);
+	SphericalDistribution3d			position_dist(3, Vec::Zero(), radius);
 	ConstDistribution3d				i_velocity_dist(Vec::Zero());
 	MaxwellDistribution3d			e_velocity_dist(1,1);
 	ConstantChargeDistribution3d	electron_charges(-1);
@@ -91,18 +90,12 @@ int main(int argc, char **argv) {
 	CoulombForce3d 			potential(c, bounds);
 	LeapfrogPusher3d 		push(c, bounds, potential);
 	Tree3d					tree(c, bounds, parts);
-	DatabaseConnection3d	db(dbname);
 	TimeIntegrator3d		integrator(c, parts, tree, bounds, push);
-
-	db.clear_database();
-	db.init_database(3);
-	db.write_sim_params(num_particles, c, bounds);
-	db.write_init_particles(parts);
 
 	bounds.init(parts);
 	push.init(parts, tree, quadrupole);
 
-	integrator.start(quadrupole, 10, db);
+	integrator.start(quadrupole, 10);
 
 
 	cout << radius << endl;

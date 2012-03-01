@@ -42,14 +42,13 @@ Configuration3d parse_cmd_line(int argc, char **argv, double& length, unsigned i
 	    ("theta,t", 			po::value<double>(&theta), "Theta (MAC)")
 	    ("param,p", 			po::value<double>(&param), "Plasma parameter (bigger implies more ideal)")
 	    ("number,n", 			po::value<unsigned int>(&num_parts), "Number of each species")
-	    ("database,b", 			po::value<std::string>(&dbname), "Database file name")
 	;
 
 	po::variables_map vm;
 	po::store(po::parse_command_line(argc, argv, desc), vm);
 	po::notify(vm);
 
-	if (vm.count("help") || vm.size() != 8) {
+	if (vm.count("help") || vm.size() != desc.options().size() - 1) {
 	    cerr << desc << endl;
 	    cerr << "All options must be specified!" << endl;
 	    exit(1);
@@ -93,17 +92,11 @@ int main(int argc, char **argv) {
 	InterpolatedEwaldSum3d	potential(c, bounds, 50, periodic_pot, open_pot);
 	LeapfrogPusher3d 		push(c, bounds, potential);
 	Tree3d					tree(c, bounds, parts);
-	DatabaseConnection3d	db(dbname);
 	TimeIntegrator3d		integrator(c, parts, tree, bounds, push);
-
-	db.clear_database();
-	db.init_database(3);
-	db.write_sim_params(num_particles, c, bounds);
-	db.write_init_particles(parts);
 
 	push.init(parts, tree, quadrupole);
 
-	integrator.start(quadrupole, 5, db);
+	integrator.start(quadrupole, 5);
 
 	return 0;
 }

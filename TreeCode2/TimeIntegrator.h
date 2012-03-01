@@ -18,7 +18,6 @@
 #include "bounds/BoundaryConditions.h"
 #include "pushers/pusher.h"
 #include "potentials/Potential.h"
-#include "output/sqlite/DatabaseConnection.h"
 
 namespace treecode {
 

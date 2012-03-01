@@ -22,8 +22,6 @@
 #include "potentials/CoulombForce.h"
 #include "TimeIntegrator.h"
 
-#include "output/sqlite/DatabaseConnection.h"
-
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/chrono.hpp>
 #include <Eigen/Dense>
