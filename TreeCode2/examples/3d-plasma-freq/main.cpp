@@ -103,17 +103,14 @@ int main(int argc, char **argv) {
 	InterpolatedEwaldSum3d	potential(c, bounds, 50, periodic_pot, open_pot);
 	LeapfrogPusher3d 		push(c, bounds, potential);
 	Tree3d					tree(c, bounds, parts);
-	DatabaseConnection3d	db(dbname);
 	TimeIntegrator3d		integrator(c, parts, tree, bounds, push);
-
-	db.clear_database();
-	db.init_database(3);
-	db.write_sim_params(num_particles, c, bounds);
-	db.write_init_particles(parts);
+	integrator.setEnergyOutputFile("energies.csv");
+	integrator.setPositionOutputFile("positions.csv");
+	integrator.setVelocityOutputFile("velocities.csv");
 
 	push.init(parts, tree, quadrupole);
 
-	integrator.start(quadrupole, 10, db);
+	integrator.start(quadrupole, 10);
 
 	return 0;
 }

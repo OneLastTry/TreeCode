@@ -61,9 +61,6 @@ typedef SinusoidalDistribution<boost::random::mt19937, Vec>	SinusoidalDistributi
 typedef ConstantChargeDistribution<boost::random::mt19937>	ConstantChargeDistribution3d;
 }
 
-namespace output{
-typedef DatabaseConnection<Vec> 							DatabaseConnection3d;
-}
 }
 
 #endif /* THREE_D_TYPEDEFS_H_ */
