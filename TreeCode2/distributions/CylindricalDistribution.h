@@ -6,8 +6,8 @@
 #include "Distribution.h"
 #include "SphericalDistribution.h"
 #include "../Configuration.h"
-#include <boost/random/uniform_real_distribution.hpp>
 #include <Eigen/Dense>
+#include <boost/random/uniform_real.hpp>
 
 namespace treecode {
 namespace distribution {
@@ -63,7 +63,7 @@ private:
 	const Configuration<Vec>& config_;
 	const Eigen::Vector2d bottom_centre_;
 	double radius_, height_;
-	boost::random::uniform_real_distribution<double> height_dist_;
+	boost::uniform_real<double> height_dist_;
 };
 
 } /* namespace distribution */
