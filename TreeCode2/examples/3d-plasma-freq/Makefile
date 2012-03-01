@@ -1,6 +1,6 @@
 INCDIR = ../../
 
-CFLAGS   = -Wall -g -I/usr/include/eigen3 -std=c++0x -D_GLIBCXX_PARALLEL -I$(INCDIR)
+CFLAGS   = -Wall -g -I/usr/include/eigen3 -D_GLIBCXX_PARALLEL -I$(INCDIR)
 OPTFLAGS = -O3 -msse -msse2 -msse3 -msse4a -ffast-math -march=barcelona -m64 -fopenmp
 LDFLAGS  = -g -lboost_system -lboost_program_options -lboost_unit_test_framework -lsqlite3 -fopenmp 
 CC = g++

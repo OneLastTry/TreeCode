@@ -77,14 +77,14 @@ virtual Vec getForce(const Particle<Vec>& part, const Node<Vec,Mat>& node, Preci
 	force += node.getCharge() * disp_vec * r3;
 
 	//Dipole moment
-	if(precision == Precision::dipole || precision == Precision::quadrupole){
+	if(precision == dipole || precision == quadrupole){
 		double r5 = r3*r2;
 		//Add diagonal contribution
 		force -= r3 * node.getDipoleMoments();
 		//Add off-diagonal contribution
 		force += (disp_vec * disp_vec.transpose()) * node.getDipoleMoments() * 3 * r5;
 
-		if(precision == Precision::quadrupole){
+		if(precision == quadrupole){
 			double r7 = r5*r2;
 			//r^-7 part:
 			force += r7 * 15.0/2 * disp_vec.dot(node.getQuadrupoleMoments() * disp_vec) * disp_vec;
@@ -128,10 +128,10 @@ virtual double getPotential(const Particle<Vec>& part, const Node<Vec,Mat>& node
 
 	potential += node.getCharge() * r;
 
-	if(precision == Precision::dipole || precision == Precision::quadrupole){
+	if(precision == dipole || precision == quadrupole){
 		double r3 = r2*r;
 		potential += r3 * disp_vec.dot(node.getDipoleMoments());
-		if(precision == Precision::quadrupole){
+		if(precision == quadrupole){
 			double r5 = r3 * r2;
 			potential += 3.0/2 * r5 * disp_vec.dot(node.getQuadrupoleMoments() * disp_vec);
 			potential -= 0.5 * r3 * node.getQuadrupoleMoments().trace();

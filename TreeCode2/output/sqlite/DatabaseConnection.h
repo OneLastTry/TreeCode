@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <sqlite3.h>
+#include <boost/foreach.hpp>
 #include "../../Particle.h"
 #include "../../bounds/BoundaryConditions.h"
 #include "../../Configuration.h"
@@ -45,7 +46,8 @@ public:
 						"VALUES (:id, :charge, :mass)", -1, &particles_init_stmt_, NULL);
 
 		sqlite3_exec(db_, "BEGIN", NULL, NULL, NULL);
-		for(Particle<Vec> *p : parts){
+		BOOST_FOREACH(Particle<Vec> *p, parts){
+
 			sqlite3_bind_int(particles_init_stmt_, 1, p->getId());
 			sqlite3_bind_int(particles_init_stmt_, 2, p->getCharge());
 			sqlite3_bind_double(particles_init_stmt_, 3, p->getMass());
@@ -64,7 +66,7 @@ public:
 		}
 
 		sqlite3_exec(db_, "BEGIN", NULL, NULL, NULL);
-		for(Particle<Vec> *p : parts){
+		BOOST_FOREACH(Particle<Vec> *p, parts){
 			sqlite3_bind_int(particles_pos_stmt_, 1, p->getId());
 			sqlite3_bind_int(particles_vel_stmt_, 1, p->getId());
 			sqlite3_bind_int(particles_pos_stmt_, 2, timestep);

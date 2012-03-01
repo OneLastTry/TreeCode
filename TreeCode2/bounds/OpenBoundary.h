@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <Eigen/Dense>
+#include <boost/foreach.hpp>
 #include "../Particle.h"
 #include "../Configuration.h"
 
@@ -47,7 +48,7 @@ public:
 	void init(const std::vector<treecode::Particle<Vec>*>& parts){
 		reset(parts.front());
 
-		for(Particle<Vec>* p : parts){
+		BOOST_FOREACH(Particle<Vec>* p, parts){
 			particleMoved(p);
 		}
 	}

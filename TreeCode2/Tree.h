@@ -43,7 +43,7 @@ public:
 		root = new Node<Vec,Mat>(conf, bc.getOrigin(), bc.getSize());
 		//Populate with particles, and gently inform the node it is root
 		root->setParticles(parts);
-		root->setStatus(Node<Vec,Mat>::tree_status::ROOT);
+		root->setStatus(Node<Vec,Mat>::ROOT);
 	}
 
 	/**

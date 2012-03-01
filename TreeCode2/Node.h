@@ -6,6 +6,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <fstream>
+#include <boost/foreach.hpp>
 
 #include "Configuration.h"
 #include "Particle.h"
@@ -63,17 +64,17 @@ public:
 	 */
 	void split(){
 		if(getNumParticles() == 0){
-			setStatus(tree_status::EMPTY);
+			setStatus(EMPTY);
 			return;
 		}else if(getNumParticles() == 1){
-			setStatus(tree_status::LEAF);
+			setStatus(LEAF);
 			calculateMonopoleMoment();
 			calculateDipoleMoment();
 			calculateQuadrupoleMoment();
 			return;
 		}else{
-			if(getStatus() != tree_status::ROOT)
-				setStatus(tree_status::BRANCH);
+			if(getStatus() != ROOT)
+				setStatus(BRANCH);
 
 			//Create daughters
 			for (unsigned int i = 0; i < configuration.getMaxChildren(); i++) {
@@ -95,7 +96,7 @@ public:
 				}
 			}
 
-			for(Particle<Vec>* p : particles){
+			BOOST_FOREACH(Particle<Vec>* p, particles){
 				//This finds which quadrant/octant of the parent the particle is in
 				unsigned int index = 0;
 				for (unsigned int j = 0; j < configuration.getNumDimensions(); j++) {
@@ -112,7 +113,7 @@ public:
 			}
 
 			//Recurse into daughters.
-			for(Node* d : daughters){
+			BOOST_FOREACH(Node* d, daughters){
 				d->split();
 			}
 			//Finally, calculate moments from daughters' moments.
@@ -139,7 +140,7 @@ public:
 
 		//If the current node is empty, do nothing.
 		//Similarly, if the node is a tree node and the particle is in it, do nothing.
-		if(status == tree_status::EMPTY || (status == tree_status::LEAF && particles.front() == &p))
+		if(status == EMPTY || (status == LEAF && particles.front() == &p))
 			return;
 
 		//Use s/d < theta mac for the moment. This uses the square of things,
@@ -151,10 +152,10 @@ public:
 		double theta = configuration.getTheta();
 
 		//Either add to ilist or recurse into daughters.
-		if(mac < theta*theta || getStatus() == tree_status::LEAF){
+		if(mac < theta*theta || getStatus() == LEAF){
 			ilist.push_back(this);
 		}else{
-			for(Node* d : daughters)
+			BOOST_FOREACH(Node* d, daughters)
 				d->addToInteractionList(p, ilist, bounds);
 		}
 	}
@@ -168,7 +169,7 @@ public:
 	void calculateMonopoleMoment(){
 
 		//If we are a leaf, just use the particle params.
-		if(status == tree_status::LEAF){
+		if(status == LEAF){
 			charge = particles.front()->getCharge();
 			abs_charge = abs(charge);
 			centre_of_charge = particles.front()->getPosition();
@@ -178,8 +179,8 @@ public:
 			abs_charge = 0;
 			centre_of_charge = Vec::Zero();
 			//Iterate through daughters
-			for(Node* daughter : daughters){
-				if(daughter->status != tree_status::EMPTY){
+			BOOST_FOREACH(Node* daughter, daughters){
+				if(daughter->status != EMPTY){
 					//Use daughter params
 					charge += daughter->getCharge();
 					abs_charge += daughter->getAbsCharge();
@@ -201,14 +202,14 @@ public:
 	 */
 	void calculateDipoleMoment(){
 
-		if(status == tree_status::LEAF){
+		if(status == LEAF){
 			//If we're a leaf, we have no dipole moment.
 			dipole_moments = Vec::Zero();
 		}else{
 			//Otherwise, shift them from the daughters.
 			dipole_moments = Vec::Zero();
-			for(Node* daughter: daughters){
-				if(daughter->status != tree_status::EMPTY){
+			BOOST_FOREACH(Node* daughter, daughters){
+				if(daughter->status != EMPTY){
 					Vec disp_vec = getCentreOfCharge() - daughter->getCentreOfCharge();
 					dipole_moments += daughter->getDipoleMoments() - disp_vec * daughter->getCharge();
 				}
@@ -235,12 +236,12 @@ public:
 	 * @see Node::calculateDipoleMoment()
 	 */
 	void calculateQuadrupoleMoment(){
-		if(status == tree_status::LEAF){
+		if(status == LEAF){
 			quadrupole_moments = Mat::Zero();
 		}else{
 			quadrupole_moments = Mat::Zero();
-			for(Node* daughter: daughters){
-				if(daughter->status != tree_status::EMPTY){
+			BOOST_FOREACH(Node* daughter, daughters){
+				if(daughter->status != EMPTY){
 					Vec disp_vec = getCentreOfCharge() - daughter->getCentreOfCharge();
 					quadrupole_moments += (daughter->getQuadrupoleMoments()
 							- disp_vec * daughter->getDipoleMoments().transpose()
@@ -264,11 +265,11 @@ public:
 	    		<< this->position[1] << " to "
 	    		<< this->position[0] + this->size << ","
 	    		<< this->position[1] + this->size << std::endl;
-	    if(status == tree_status::LEAF)
+	    if(status == LEAF)
 	    	return;
 
-	    for(Node* d : daughters){
-	    	if(d->status != tree_status::EMPTY)
+	    BOOST_FOREACH(Node* d, daughters){
+	    	if(d->status != EMPTY)
 	    		d->outputNodes(fout, index);
 	    }
 	}
@@ -277,7 +278,7 @@ public:
 	 * @brief Node destructor -- destroys all daughter nodes.
 	 */
 	~Node() {
-		for(Node* n : daughters){
+		BOOST_FOREACH(Node* n, daughters){
 			delete n;
 		}
 	}

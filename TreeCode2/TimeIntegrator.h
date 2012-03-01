@@ -18,7 +18,6 @@
 #include "bounds/BoundaryConditions.h"
 #include "pushers/pusher.h"
 #include "potentials/Potential.h"
-#include "output/Output.h"
 #include "output/sqlite/DatabaseConnection.h"
 
 namespace treecode {
@@ -50,14 +49,6 @@ public:
 			pusher::Pusher<Vec,Mat>& pusher):
 		bounds_(bounds), particles_(particles), conf_(conf), pusher_(pusher), tree_(tree)
 	{}
-
-	void addParticleOutput(output::Output<Vec>* o){
-		per_particle_outputs_.push_back(o);
-	}
-
-	void addTimestepOutput(output::Output<Vec>* o){
-		per_timestep_outputs_.push_back(o);
-	}
 
 	/**
 	 * @brief Kick off the integration.
@@ -95,9 +86,6 @@ private:
 	const Configuration<Vec>& conf_;
 	pusher::Pusher<Vec,Mat>& pusher_;
 	Tree<Vec,Mat>& tree_;
-
-	std::vector<output::Output<Vec>*> per_particle_outputs_;
-	std::vector<output::Output<Vec>*> per_timestep_outputs_;
 };
 
 } /* namespace treecode */

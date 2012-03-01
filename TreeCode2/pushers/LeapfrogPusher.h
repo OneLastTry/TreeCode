@@ -18,11 +18,6 @@
 #include "../bounds/BoundaryConditions.h"
 #include "../Tree.h"
 
-#ifdef INTEL_COMPILER
-#include <boost/foreach.hpp>
-#define for(a:b) BOOST_FOREACH(a,b)
-#endif
-
 namespace treecode {
 
 namespace pusher {
@@ -57,14 +52,18 @@ public:
 	 */
 	void init(std::vector<Particle<Vec>*> parts, Tree<Vec,Mat>& tree, potentials::Precision precision){
 		using std::vector;
+		typedef Node<Vec,Mat> Node;
+		typedef vector<Node*> interaction_list;
+
 		//Rebuild the tree, to get the right nodes.
 		tree.rebuild();
 		//Create interaction list
-		vector<Node<Vec,Mat>*> ilist;
+		interaction_list ilist;
 		//Loop over all particles, get ilist and then push particle.
-		for(Particle<Vec>* p : parts){
+		BOOST_FOREACH(Particle<Vec>* p, parts){
 			tree.getInteractionList(*p, ilist);
-			for(Node<Vec,Mat>* n : ilist){
+			for(typename interaction_list::iterator it = ilist.begin(); it < ilist.end(); it++){
+				Node* n = *it;
 				push_velocity(*p, *n, configuration.getTimestep()/2, precision);
 			}
 		}
@@ -78,6 +77,9 @@ public:
 	 */
 	std::pair<double, double> push_particles(std::vector<Particle<Vec>*> parts, Tree<Vec,Mat>& tree, BoundaryConditions<Vec>& bc,
 			potentials::Precision precision){
+
+		typedef Node<Vec,Mat> Node;
+		typedef std::vector<Node*> interaction_list;
 
 		using Eigen::Vector2d;
 
@@ -102,7 +104,7 @@ public:
 
 		//Push position of each particle
 
-		for(Particle<Vec>* p : parts){
+		BOOST_FOREACH(Particle<Vec>* p, parts){
 			push_position(*p, configuration.getTimestep());
 			bc.particleMoved(p);
 		}
@@ -115,10 +117,11 @@ public:
 		#pragma omp parallel for reduction(+:ke,pe) schedule(dynamic)
 		for(unsigned int i=0;i<parts.size();i++){
 			Particle<Vec>* p = parts[i];
-			std::vector<Node<Vec,Mat>*> ilist;
+			interaction_list ilist;
 			tree.getInteractionList(*p, ilist);
 			double initial_vel = p->getVelocity().norm();
-			for(Node<Vec,Mat>* n : ilist){
+			for(typename interaction_list::iterator it = ilist.begin(); it < ilist.end(); it++){
+				Node* n = *it;
 				push_velocity(*p, *n, configuration.getTimestep(), precision);
 				pe += 0.5 * p->getCharge() * potential.getPotential(*p, *n, precision);
 			}
