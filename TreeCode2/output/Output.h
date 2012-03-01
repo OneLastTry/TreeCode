@@ -13,11 +13,6 @@
 #include <vector>
 #include "../Particle.h"
 
-#ifdef INTEL_COMPILER
-#include <boost/foreach.hpp>
-#define for(a:b) BOOST_FOREACH(a,b)
-#endif
-
 namespace treecode {
 
 namespace output {
