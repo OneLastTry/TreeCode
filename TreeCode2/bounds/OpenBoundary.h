@@ -15,6 +15,11 @@
 #include "../Particle.h"
 #include "../Configuration.h"
 
+#ifdef INTEL_COMPILER
+#include <boost/foreach.hpp>
+#define for(a:b) BOOST_FOREACH(a,b)
+#endif
+
 namespace treecode {
 
 template <class Vec>
@@ -46,6 +51,7 @@ public:
 	 */
 	void init(const std::vector<treecode::Particle<Vec>*>& parts){
 		reset(parts.front());
+
 		for(Particle<Vec>* p : parts){
 			particleMoved(p);
 		}
