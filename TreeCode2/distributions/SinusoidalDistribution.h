@@ -7,7 +7,7 @@
 #include "UniformDistribution.h"
 #include "../Configuration.h"
 #include <cmath>
-#include <boost/random/uniform_real_distribution.hpp>
+#include <boost/random/uniform_real.hpp>
 #include <Eigen/Dense>
 
 #include <iostream>
@@ -66,7 +66,7 @@ private:
 	unsigned int dimension_;
 	Vec min_, max_;
 	double wavelengths_, phase_;
-	boost::random::uniform_real_distribution<double> real_dist_;
+	boost::uniform_real<double> real_dist_;
 };
 
 } /* namespace distribution */
