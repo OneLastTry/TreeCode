@@ -1,0 +1,6 @@
+Table 					Fields
+----- 					------
+Params 					num_particles, length, dimensions, plasma_param, timestep, max_time, force_softening
+Particles 				id, charge, mass
+Positions 				particle_id, timestep, x, y, z
+Velocities 				particle_id, timestep, vx, vy, vz

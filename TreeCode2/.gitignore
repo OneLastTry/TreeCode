@@ -1,0 +1,17 @@
+#Ignore results files
+*.gp
+*.db
+*.csv
+*.pdf
+
+#Ignore binary files
+*.o
+
+#Ignore archive files
+*.tar.bz2
+*.tar.gz
+
+#Ignore some dirs that don't need to be committed
+plots
+tmp
+doc
