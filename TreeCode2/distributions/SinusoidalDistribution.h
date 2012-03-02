@@ -54,7 +54,7 @@ public:
 		do{
 			u = real_dist_(rng);
 			v = uniform_dist_->getVector(rng);
-		}while(sin(v[dimension_]*k)+1 < u);
+		}while(sin(v[dimension_]*k + phase_)+1 < u);
 		return v;
 	}
 

@@ -48,7 +48,7 @@ Configuration3d parse_cmd_line(int argc, char **argv, double& radius, unsigned i
 	po::store(po::parse_command_line(argc, argv, desc), vm);
 	po::notify(vm);
 
-	if (vm.count("help") || vm.size() != 8) {
+	if (vm.count("help") || vm.size() != desc.options().size() - 1) {
 	    cerr << desc << endl;
 	    cerr << "All options must be specified!" << endl;
 	    exit(1);
@@ -61,7 +61,6 @@ int main(int argc, char **argv) {
 	using namespace treecode::distribution;
 	using namespace treecode::potentials;
 	using namespace treecode::pusher;
-	using namespace treecode::output;
 
 	using boost::random::mt19937;
 	mt19937 rng;
@@ -72,6 +71,8 @@ int main(int argc, char **argv) {
 	Configuration3d c = parse_cmd_line(argc, argv, radius, num_particles, dbname);
 
 	SphericalDistribution3d			position_dist(3, Vec::Zero(), radius);
+	SphericalDistribution3d			perturb_dist(3, Vec::Zero(), radius/10);
+
 	ConstDistribution3d				i_velocity_dist(Vec::Zero());
 	MaxwellDistribution3d			e_velocity_dist(1,1);
 	ConstantChargeDistribution3d	electron_charges(-1);
@@ -81,10 +82,15 @@ int main(int argc, char **argv) {
 	vector<Particle3d*> parts;
 	vector<Particle3d*> ions = Particle3d::generateParticles<mt19937>(num_particles, 1837, rng,
 			position_dist, i_velocity_dist, ion_charges, id);
-	vector<Particle3d*> electrons = Particle3d::generateParticles<mt19937>(num_particles, 1, rng,
-				position_dist, e_velocity_dist, electron_charges, id);
+	vector<Particle3d*> electrons = Particle3d::generateParticles<mt19937>(num_particles*0.8, 1, rng,
+				position_dist, i_velocity_dist, electron_charges, id);
+
+	vector<Particle3d*> perturbed_electrons = Particle3d::generateParticles<mt19937>(num_particles*0.2, 1, rng,
+					perturb_dist, i_velocity_dist, electron_charges, id);
+
 	parts.insert(parts.end(), ions.begin(), ions.end());
 	parts.insert(parts.end(), electrons.begin(), electrons.end());
+	parts.insert(parts.end(), perturbed_electrons.begin(), perturbed_electrons.end());
 
 	OpenBoundary3d 			bounds(c);
 	CoulombForce3d 			potential(c, bounds);
@@ -95,6 +101,9 @@ int main(int argc, char **argv) {
 	bounds.init(parts);
 	push.init(parts, tree, quadrupole);
 
+	integrator.setEnergyOutputFile("energies.csv");
+	integrator.setPositionOutputFile("positions.csv");
+	integrator.setVelocityOutputFile("velocities.csv");
 	integrator.start(quadrupole, 10);
 
 

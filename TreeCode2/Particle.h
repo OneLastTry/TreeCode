@@ -84,6 +84,12 @@ public:
     void setPosition(const Vec& pos){ position = pos; }
 
     /**
+     * @brief Set velocity.
+     * @param vel New velocity.
+     */
+    void setVelocity(const Vec& vel){ velocity = vel; }
+
+    /**
      * @brief Increment velocity of particle.
      * @param dv Amount to increase by.
      */

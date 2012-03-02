@@ -67,7 +67,7 @@ public:
 			std::cout << "Timestep " << i << " of " << num_steps << " complete (" << ((float)i/(float)num_steps)*100 << "%)" << std::endl;
 			if( (i%output_every) == 0){
 				if(energies_out_ != NULL){
-					(*energies_out_) << energies.first << "\t" << energies.second << std::endl;
+					(*energies_out_) << (i*conf_.getTimestep()) << "\t" << energies.first << "\t" << energies.second << std::endl;
 				}
 				if(pos_out_ != NULL || vel_out_ != NULL){
 					BOOST_FOREACH(Particle<Vec>* p, particles_){
@@ -79,6 +79,10 @@ public:
 								(*vel_out_) << p->getVelocity()[i] << "\t";
 						}
 					}
+					if(pos_out_ != NULL)
+						(*pos_out_) << std::endl;
+					if(vel_out_ != NULL)
+						(*vel_out_) << std::endl;
 				}
 			}
 		}

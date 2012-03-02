@@ -118,9 +118,9 @@ public:
 
 		double potential = 0;
 		EwaldNode<Vec,Mat> interpolated = interpolate(disp_vec_to_centre);
-		potential -= node.getCharge() * interpolated.t0;
-		potential -= node.getDipoleMoments().dot(interpolated.t1);
-		potential -= 0.5 * (node.getQuadrupoleMoments().transpose() * interpolated.t2).trace();
+		potential += node.getCharge() * interpolated.t0;
+		potential += node.getDipoleMoments().dot(interpolated.t1);
+		potential += 0.5 * (node.getQuadrupoleMoments().transpose() * interpolated.t2).trace();
 
 		//Apply self-energy correction
 		potential -= 2 * ewald_pot_.alpha_ / SQRT_PI * node.getCharge();
