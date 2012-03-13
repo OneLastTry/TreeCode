@@ -19,6 +19,8 @@
 #include <Node.h>
 #include <Tree.h>
 #include <TimeIntegrator.h>
+#include <macs/BarnesHutMAC.h>
+#include <output/ParticleTracker.h>
 
 #include <Eigen/Dense>
 #include <vector>
@@ -33,39 +35,29 @@ namespace po = boost::program_options;
 
 Configuration3d parse_cmd_line(int argc, char **argv, double& length, unsigned int& num_parts, double& proportion, double& wavelengths, double& temperature){
 
-	Option length_opt("--length", "-l", "Length of system (in debye lengths)");
-	Option timestep_opt("--timestep", "-dt", "Individual timestep.");
-	Option force_softening_opt("--softening", "-fs", "Force softening parameter.");
-	Option max_time_opt("--max-time", "-mt", "Maximum time to run to.");
-	Option theta_opt("--theta", "-t", "Critical opening angle.");
-	Option param_opt("--param", "-p", "Plasma parameter (larger implies more ideal)");
-	Option number_opt("--number", "-n", "Number of each species.");
-	Option proportion_opt("--proportion", "-prop", "Proportion of particles in sinusoidal perturbation (0.0-1.0).");
-	Option wavelength_opt("--wavelengths", "-w", "Number of wavelengths in perturbation.");
-	Option temperature_opt("--temperature", "-temp", "Temperature of plasma.");
-	Option help_opt("--help", "-h", "This help text.");
-	Option opts[] = {
-			length_opt, timestep_opt, force_softening_opt, max_time_opt, theta_opt, param_opt, number_opt,
-			proportion_opt, wavelength_opt, temperature_opt, help_opt
-	};
-
 	OptionParser op(argc, argv);
-	if(op.optionPresent(help_opt)){
-		BOOST_FOREACH(Option o, opts) o.display(std::cout);
+	bool help;
+	double timestep, theta, max_time, param, fs;
+
+	op << new ArgOption<double>("--length", "-l", "Length of system (in debye lengths)", length) <<
+			new ArgOption<double>("--timestep", "-dt", "Individual timestep.", timestep) <<
+			new ArgOption<double>("--softening", "-fs", "Force softening parameter.", fs) <<
+			new ArgOption<double>("--max-time", "-mt", "Maximum time to run to.", max_time) <<
+			new ArgOption<double>("--theta", "-t", "Critical opening angle.", theta) <<
+			new ArgOption<double>("--param", "-p", "Plasma parameter (larger implies more ideal)", param) <<
+			new ArgOption<unsigned int>("--number", "-n", "Number of each species.", num_parts) <<
+			new ArgOption<double>("--proportion", "-prop", "Proportion of particles in sinusoidal perturbation (0.0-1.0).", proportion) <<
+			new ArgOption<double>("--wavelengths", "-w", "Number of wavelengths in perturbation.", wavelengths) <<
+			new ArgOption<double>("--temperature", "-temp", "Temperature of plasma.", temperature) <<
+			new BoolOption("--help", "-h", "This help text.", help);
+	unsigned int num_options = op.parse();
+
+	if(help || num_options != op.size() - 1){
+		op.display();
+		exit(0);
 	}
 
-	length = op.getOption<double>(length_opt);
-	num_parts = op.getOption<double>(number_opt);
-	proportion = op.getOption<double>(proportion_opt);
-	wavelengths = op.getOption<double>(wavelength_opt);
-	temperature = op.getOption<double>(temperature_opt);
-
-	return Configuration3d(3,
-			op.getOption<double>(theta_opt),
-			op.getOption<double>(timestep_opt),
-			op.getOption<double>(max_time_opt),
-			op.getOption<unsigned int>(param_opt),
-			op.getOption<double>(force_softening_opt));
+	return Configuration3d(3, theta, timestep, max_time, param, fs);
 
 }
 
@@ -73,6 +65,7 @@ int main(int argc, char **argv) {
 	using namespace treecode::distribution;
 	using namespace treecode::potentials;
 	using namespace treecode::pusher;
+	using namespace treecode::output;
 
 	using boost::mt19937;
 	mt19937 rng;
@@ -106,20 +99,21 @@ int main(int argc, char **argv) {
 	parts.insert(parts.end(), perturbed_electrons.begin(), perturbed_electrons.end());
 
 	PeriodicBoundary3d		bounds(c, origin, length);
+	BarnesHutMAC<Vec,Mat>		mac(0.7, bounds);
 	CoulombForce3d 			open_pot(c, bounds);
-	EwaldForce3d			periodic_pot(c, bounds, 2.0 / length, 5, 5);
+	EwaldForce3d			periodic_pot(c, bounds, 2.0 / length, 10, 10);
 	InterpolatedEwaldSum3d	potential(c, bounds, 25, periodic_pot, open_pot);
 	potential.init();
 	LeapfrogPusher3d 		push(c, bounds, potential);
 	Tree3d					tree(c, bounds, parts);
-	TimeIntegrator3d		integrator(c, parts, tree, bounds, push);
+	TimeIntegrator3d		integrator(c, parts, tree, bounds, push, mac);
 	integrator.setEnergyOutputFile("energies.csv");
-	integrator.setPositionOutputFile("positions.csv");
-	integrator.setVelocityOutputFile("velocities.csv");
+	integrator.addParticleTracker(new ParticleTracker<Vec>("positions.csv", parts, ParticleTracker<Vec>::POSITION));
+	integrator.addParticleTracker(new ParticleTracker<Vec>("velocities.csv", parts, ParticleTracker<Vec>::VELOCITY));
 
 	cout << "Initialising pusher" << endl;
 
-	push.init(parts, tree, quadrupole);
+	push.init(parts, tree, quadrupole, mac);
 
 	integrator.start(quadrupole, 1);
 

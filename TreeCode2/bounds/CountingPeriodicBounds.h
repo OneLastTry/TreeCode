@@ -18,7 +18,7 @@ namespace treecode {
 template <class Vec>
 class CountingPeriodicBounds : public PeriodicBoundary<Vec> {
 public:
-	CountingPeriodicBounds(Configuration<Vec> c, Vec origin, double length, std::ofstream& output) :
+	CountingPeriodicBounds(Configuration<Vec> c, Vec origin, double length, std::ostream& output) :
 		PeriodicBoundary<Vec>(c, origin, length),
 		output_(output),
 		left_edge_(Vec::Zero()), right_edge_(Vec::Zero()){}
@@ -66,7 +66,7 @@ public:
 
 	virtual ~CountingPeriodicBounds(){}
 private:
-	std::ofstream& output_;
+	std::ostream& output_;
 	Vec left_edge_, right_edge_;
 };
 

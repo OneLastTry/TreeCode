@@ -17,6 +17,7 @@
 #include "../potentials/Potential.h"
 #include "../bounds/BoundaryConditions.h"
 #include "../Tree.h"
+#include "../macs/AcceptanceCriterion.h"
 
 namespace treecode {
 
@@ -50,7 +51,8 @@ public:
 	 * @param tree		Tree object, containg all particles.
 	 * @param precision	Precision to use in force calculation.
 	 */
-	void init(std::vector<Particle<Vec>*> parts, Tree<Vec,Mat>& tree, potentials::Precision precision){
+	void init(std::vector<Particle<Vec>*> parts, Tree<Vec,Mat>& tree, potentials::Precision precision,
+			const AcceptanceCriterion<Vec,Mat>& mac){
 		using std::vector;
 		typedef Node<Vec,Mat> Node;
 		typedef vector<Node*> interaction_list;
@@ -61,7 +63,7 @@ public:
 		interaction_list ilist;
 		//Loop over all particles, get ilist and then push particle.
 		BOOST_FOREACH(Particle<Vec>* p, parts){
-			tree.getInteractionList(*p, ilist);
+			tree.getInteractionList(*p, ilist, mac);
 			for(typename interaction_list::iterator it = ilist.begin(); it < ilist.end(); it++){
 				Node* n = *it;
 				push_velocity(*p, *n, configuration.getTimestep()/2, precision);
@@ -75,8 +77,10 @@ public:
 	 * @param tree		Tree to use to push the particles.
 	 * @param precision	Precision to use in force calculation.
 	 */
-	std::pair<double, double> push_particles(std::vector<Particle<Vec>*> parts, Tree<Vec,Mat>& tree, BoundaryConditions<Vec>& bc,
-			potentials::Precision precision){
+	std::pair<double, double> push_particles(
+			std::vector<Particle<Vec>*> parts, Tree<Vec,Mat>& tree, BoundaryConditions<Vec>& bc,
+			potentials::Precision precision,
+			const AcceptanceCriterion<Vec,Mat>& mac){
 
 		typedef Node<Vec,Mat> Node;
 		typedef std::vector<Node*> interaction_list;
@@ -118,7 +122,7 @@ public:
 		for(unsigned int i=0;i<parts.size();i++){
 			Particle<Vec>* p = parts[i];
 			interaction_list ilist;
-			tree.getInteractionList(*p, ilist);
+			tree.getInteractionList(*p, ilist, mac);
 			double initial_vel = p->getVelocity().norm();
 			for(typename interaction_list::iterator it = ilist.begin(); it < ilist.end(); it++){
 				Node* n = *it;

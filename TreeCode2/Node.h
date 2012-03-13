@@ -11,6 +11,7 @@
 #include "Configuration.h"
 #include "Particle.h"
 #include "bounds/BoundaryConditions.h"
+#include "macs/AcceptanceCriterion.h"
 
 namespace treecode {
 
@@ -136,27 +137,20 @@ public:
 	 * @param[out] ilist	Interaction list for particle.
 	 * @param bounds	Boundary conditions of system.
 	 */
-	void addToInteractionList(const Particle<Vec>& p, std::vector<Node*>& ilist, const BoundaryConditions<Vec>& bounds){
+	void addToInteractionList(const Particle<Vec>& p, std::vector<Node*>& ilist, const BoundaryConditions<Vec>& bounds,
+			const AcceptanceCriterion<Vec,Mat>& mac){
 
 		//If the current node is empty, do nothing.
 		//Similarly, if the node is a tree node and the particle is in it, do nothing.
 		if(status == EMPTY || (status == LEAF && particles.front() == &p))
 			return;
 
-		//Use s/d < theta mac for the moment. This uses the square of things,
-		//in an attempt to minimise sqrt calls.
-
-		//Use displacement vector as defined by our boundary conditions.
-		double d_squared = bounds.getDisplacementVector(p.getPosition(), getCentreOfCharge()).squaredNorm();
-		double mac = size*size / d_squared;
-		double theta = configuration.getTheta();
-
 		//Either add to ilist or recurse into daughters.
-		if(mac < theta*theta || getStatus() == LEAF){
+		if(mac.accept(p, *this)){
 			ilist.push_back(this);
 		}else{
 			BOOST_FOREACH(Node* d, daughters)
-				d->addToInteractionList(p, ilist, bounds);
+				d->addToInteractionList(p, ilist, bounds, mac);
 		}
 	}
 
@@ -356,6 +350,18 @@ public:
 	 * @brief Delete all particles from node.
 	 */
 	void clearParticles() { particles.clear(); }
+
+	/**
+	 * @brief Get list of particles.
+	 * @return Particles.
+	 */
+	const std::vector<Particle<Vec>* >& getParticles() const {return particles;}
+
+	/**
+	 * @brief Get size of node.
+	 * @returns Size of node.
+	 */
+	double getSize() const {return size; }
 
 private:
 	const Configuration<Vec>& configuration;

@@ -18,6 +18,7 @@
 #include "bounds/BoundaryConditions.h"
 #include "pushers/pusher.h"
 #include "potentials/Potential.h"
+#include "output/ParticleTracker.h"
 
 namespace treecode {
 
@@ -45,9 +46,10 @@ public:
 			std::vector<Particle<Vec>*>& particles,
 			Tree<Vec,Mat>& tree,
 			BoundaryConditions<Vec>& bounds,
-			pusher::Pusher<Vec,Mat>& pusher):
-		bounds_(bounds), particles_(particles), conf_(conf), pusher_(pusher), tree_(tree),
-		pos_out_(NULL), vel_out_(NULL), energies_out_(NULL)
+			pusher::Pusher<Vec,Mat>& pusher,
+			const AcceptanceCriterion<Vec,Mat>& mac):
+		bounds_(bounds), particles_(particles), conf_(conf), pusher_(pusher),
+		tree_(tree), energies_out_(NULL), mac_(mac)
 	{}
 
 	/**
@@ -61,29 +63,17 @@ public:
 	void start(potentials::Precision precision, unsigned int output_every){
 		long int num_steps = conf_.getMaxTime() / conf_.getTimestep();
 		for(long int i=0;i<num_steps;i++){
-			std::pair<double, double> energies = pusher_.push_particles(particles_, tree_, bounds_, precision);
+			std::pair<double, double> energies = pusher_.push_particles(particles_, tree_, bounds_, precision, mac_);
 			bounds_.timestepOver();
 
 			std::cout << "Timestep " << i << " of " << num_steps << " complete (" << ((float)i/(float)num_steps)*100 << "%)" << std::endl;
 			if( (i%output_every) == 0){
-				if(energies_out_ != NULL){
-					(*energies_out_) << (i*conf_.getTimestep()) << "\t" << energies.first << "\t" << energies.second << std::endl;
-				}
-				if(pos_out_ != NULL || vel_out_ != NULL){
-					BOOST_FOREACH(Particle<Vec>* p, particles_){
-						if(pos_out_ != NULL){
-							for(int i=0;i<p->getPosition().rows();i++)
-								(*pos_out_) << p->getPosition()[i] << "\t";
-						}if(vel_out_ != NULL){
-							for(int i=0;i<p->getVelocity().rows();i++)
-								(*vel_out_) << p->getVelocity()[i] << "\t";
-						}
-					}
-					if(pos_out_ != NULL)
-						(*pos_out_) << std::endl;
-					if(vel_out_ != NULL)
-						(*vel_out_) << std::endl;
-				}
+				if(energies_out_ != NULL)
+					(*energies_out_) << (i * conf_.getTimestep()) << "\t" << energies.first << "\t" << energies.second << std::endl;
+
+				typedef output::ParticleTracker<Vec> track;
+				BOOST_FOREACH(track* t, particle_trackers_)
+					t->output();
 			}
 		}
 	}
@@ -92,25 +82,7 @@ public:
 	 * @brief Destructor.
 	 */
 	~TimeIntegrator() {
-		delete pos_out_;
-		delete vel_out_;
 		delete energies_out_;
-	}
-
-	/**
-	 * @brief Set file to output particle positions to
-	 * @param filename File name
-	 */
-	void setPositionOutputFile(const char* filename){
-		pos_out_ = new std::ofstream(filename);
-	}
-
-	/**
-	 * @brief Set file to output particle velocities to
-	 * @param filename File name
-	 */
-	void setVelocityOutputFile(const char* filename){
-		vel_out_ = new std::ofstream(filename);
 	}
 
 	/**
@@ -121,6 +93,14 @@ public:
 		energies_out_ = new std::ofstream(filename);
 	}
 
+	/**
+	 * @brief Add particle tracker.
+	 * @param tracker Tracker.
+	 */
+	void addParticleTracker(output::ParticleTracker<Vec>* tracker){
+		particle_trackers_.push_back(tracker);
+	}
+
 private:
 	BoundaryConditions<Vec>& bounds_;
 	std::vector<Particle<Vec>*>& particles_;
@@ -128,7 +108,10 @@ private:
 	pusher::Pusher<Vec,Mat>& pusher_;
 	Tree<Vec,Mat>& tree_;
 
-	std::ofstream *pos_out_, *vel_out_, *energies_out_;
+	std::ofstream *energies_out_;
+	const AcceptanceCriterion<Vec,Mat>& mac_;
+
+	std::vector<output::ParticleTracker<Vec>* > particle_trackers_;
 };
 
 } /* namespace treecode */

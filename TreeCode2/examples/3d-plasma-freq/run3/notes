@@ -1,0 +1,15 @@
+Run in new unit system:
+expected period = 1.114e-11 s
+r_c = 4.153e-6 m (found from N = 3e4 = 4/3 pi r_c^3 (because r was set to 1r_c))
+t_c = 5.318e-10 s
+n_e = 1e20 / m3
+N   = 3e4, l = 1
+
+expected period = 0.021 t_c
+
+dt  = 0.01 t_c
+theta = 0.7
+50% of all electrons with radius r/10
+Force softening: 0.1 r_c
+
+Bin was from -0.1 < x < 0.1

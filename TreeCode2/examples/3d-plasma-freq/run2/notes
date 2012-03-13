@@ -1,0 +1,12 @@
+Run in new unit system:
+t_c = 1.114E-11 s
+r_c = 3.155e-7 m
+n_e = 2e20 / m3
+N   = 2e4 => l = 18.5336 r_c
+
+dt  = 0.01 t_c
+theta = 0.7
+50% of all electrons in a sinusoidal perturbation in x direction (1 wavelength)
+Force softening: 0.1 r_c
+
+Bin was from -1 < x < 1

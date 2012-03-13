@@ -41,7 +41,7 @@ public:
 	/**
 	 * @brief Destructor. Nothing needs to be done.
 	 */
-	~Particle() {}
+	virtual ~Particle() {}
 
 
 	/**

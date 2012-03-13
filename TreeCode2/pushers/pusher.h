@@ -9,6 +9,7 @@
 #include "../Node.h"
 #include "../Tree.h"
 #include "../bounds/BoundaryConditions.h"
+#include "../macs/AcceptanceCriterion.h"
 
 namespace treecode {
 
@@ -31,8 +32,13 @@ public:
 	 * @param prec	Precision to use in force calculation.
 	 * @return std::pair<ke,pe> containg kinetic energy and potential energy
 	 */
-	virtual std::pair<double, double> push_particles(std::vector<Particle<Vec>*> parts, Tree<Vec,Mat>& tree, BoundaryConditions<Vec>& bc,
-			potentials::Precision prec) = 0;
+	virtual std::pair<double, double> push_particles(
+			std::vector<Particle<Vec>*> parts,
+			Tree<Vec,Mat>& tree,
+			BoundaryConditions<Vec>& bc,
+			potentials::Precision prec,
+			const AcceptanceCriterion<Vec, Mat>& mac) = 0;
+
 };
 
 }

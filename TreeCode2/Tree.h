@@ -16,6 +16,7 @@
 #include "bounds/BoundaryConditions.h"
 #include "Particle.h"
 #include "Node.h"
+#include "macs/AcceptanceCriterion.h"
 
 namespace treecode {
 
@@ -70,10 +71,10 @@ public:
 	 * @param p		Particle to generate the list for.231
 	 * @param[out] ilist	Nodes to interact with will be placed here.
 	 */
-	void getInteractionList(const Particle<Vec>& p, std::vector<Node<Vec,Mat>*>& ilist) const{
+	void getInteractionList(const Particle<Vec>& p, std::vector<Node<Vec,Mat>*>& ilist, const AcceptanceCriterion<Vec,Mat>& mac) const{
 		//Make sure the list is clear, and then delegate to the root node.
 		ilist.clear();
-		root->addToInteractionList(p, ilist, boundary);
+		root->addToInteractionList(p, ilist, boundary, mac);
 	}
 
 	/**
