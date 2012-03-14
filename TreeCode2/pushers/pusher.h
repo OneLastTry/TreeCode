@@ -33,9 +33,9 @@ public:
 	 * @return std::pair<ke,pe> containg kinetic energy and potential energy
 	 */
 	virtual std::pair<double, double> push_particles(
-			std::vector<Particle<Vec>*> parts,
+			std::vector<Particle<Vec,Mat>*> parts,
 			Tree<Vec,Mat>& tree,
-			BoundaryConditions<Vec>& bc,
+			BoundaryConditions<Vec,Mat>& bc,
 			potentials::Precision prec,
 			const AcceptanceCriterion<Vec, Mat>& mac) = 0;
 

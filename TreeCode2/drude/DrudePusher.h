@@ -16,6 +16,7 @@
 #include <vector>
 #include <boost/foreach.hpp>
 #include <cmath>
+#include <iostream>
 
 namespace treecode{
 namespace pusher{
@@ -23,41 +24,58 @@ namespace pusher{
 template<class Vec, class Mat>
 class DrudePusher : public Pusher<Vec, Mat>{
 public:
-	DrudePusher(const Configuration<Vec>& config, BoundaryConditions<Vec>& bounds):config_(config), bounds_(bounds){}
+	DrudePusher(const Configuration<Vec>& config, BoundaryConditions<Vec,Mat>& bounds, DrudeMAC<Vec,Mat>& mac):
+		config_(config), bounds_(bounds), mac_(mac){}
 
-	std::pair<double, double> push_particles(std::vector<Particle<Vec>*> parts, Tree<Vec,Mat>& tree,
-			BoundaryConditions<Vec>& bc,
+	std::pair<double, double> push_particles(std::vector<Particle<Vec,Mat>*> parts, Tree<Vec,Mat>& tree,
+			BoundaryConditions<Vec,Mat>& bc,
 			potentials::Precision prec, const AcceptanceCriterion<Vec, Mat>& mac){
+		typedef Particle<Vec,Mat> part_t;
+
+		tree.rebuild();
 
 		std::pair<double, double> energies(0,0);
-		BOOST_FOREACH(Particle<Vec>* p, parts){
-				std::pair<double, double> p_energy = push_particle_recursive(p, tree, bc, prec, mac, config_.getTimestep());
-				energies.first += p_energy.first;
-				energies.second += p_energy.second;
+		BOOST_FOREACH(part_t* p, parts){
+			p->updateVelocity(Vec(1,0));
+			std::pair<double, double> p_energy = push_particle_recursive(p, tree, bc, prec, mac, config_.getTimestep());
+			energies.first += p_energy.first;
+			energies.second += p_energy.second;
 		}
 		return energies;
 	}
 
 private:
-	std::pair<double, double> push_particle_recursive(Particle<Vec>* p, Tree<Vec,Mat>& tree,
-			BoundaryConditions<Vec>& bc,
+	std::pair<double, double> push_particle_recursive(Particle<Vec,Mat>* p, Tree<Vec,Mat>& tree,
+			BoundaryConditions<Vec,Mat>& bc,
 				potentials::Precision prec, const AcceptanceCriterion<Vec, Mat>& mac, double dt){
 		typedef std::vector<Node<Vec,Mat>* > interaction_list;
 
-		tree.rebuild();
+		mac_.setTimestep(dt);
+
+//		tree.rebuild();
 
 		double ke = 0;
 		interaction_list ilist;
+		//Start from the particle's grandparent.
 		tree.getInteractionList(*p, ilist, mac);
 
 		if(ilist.size() > 0){
 			double distance_to_travel = p->getVelocity().norm() * config_.getTimestep();
 			for(typename interaction_list::iterator it = ilist.begin(); it < ilist.end(); it++){
 				Node<Vec,Mat>* n = *it;
-				BigParticle<Vec>* interacting_particle = dynamic_cast<BigParticle<Vec>*>(n->getParticles().front());
-				double distance_to_edge = distanceToIntersection(p, interacting_particle);
+				BigParticle<Vec,Mat>* interacting_particle = dynamic_cast<BigParticle<Vec,Mat>*>(n->getParticles().front());
+				if(!DrudeMAC<Vec,Mat>::willIntersect(*p, *interacting_particle, bounds_))
+					continue;
+
+				double distance_to_edge = DrudeMAC<Vec,Mat>::distanceToIntersection(*p, *interacting_particle, bounds_);
+				if(distance_to_edge > distance_to_travel || distance_to_edge < 0)
+					continue;
 				//Move to edge of particle
 				p->updatePosition(p->getVelocity() * dt * (distance_to_edge/distance_to_travel));
+				bounds_.particleMoved(p);
+				if(p->getPosition()[0] < -50 || p->getPosition()[1] < -50)
+					std::cout << p->getPosition() << std::endl;
+
 				//Reflect the velocity vector
 				Vec disp_vec = p->getPosition() - interacting_particle->getPosition();
 				disp_vec /= disp_vec.norm();
@@ -75,15 +93,11 @@ private:
 		return std::pair<double, double>(ke, 0);
 	}
 
-	double distanceToIntersection(Particle<Vec>* p, BigParticle<Vec>* bp){
-		Vec l = p->getVelocity() / p->getVelocity().norm();
-		Vec c = bp->getPosition() - p->getPosition();
-		return l.dot(c) - sqrt(l.dot(c) * l.dot(c) - c.squaredNorm() + bp->getRadius()*bp->getRadius());
-	}
 
 protected:
 	const Configuration<Vec>& config_;
-	BoundaryConditions<Vec>& bounds_;
+	BoundaryConditions<Vec,Mat>& bounds_;
+	DrudeMAC<Vec,Mat>& mac_;
 };
 
 }

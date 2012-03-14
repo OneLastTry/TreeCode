@@ -15,10 +15,10 @@
 namespace treecode{
 namespace output{
 
-template <class Vec>
+template <class Vec, class Mat>
 class TemperatureTracker : public ParticleTracker<Vec>{
 public:
-	TemperatureTracker(std::string filename, const std::vector<Particle<Vec>* >& parts, double ring_length, Vec origin):
+	TemperatureTracker(std::string filename, const std::vector<Particle<Vec,Mat>* >& parts, double ring_length, Vec origin):
 		ParticleTracker<Vec>(filename, parts, ParticleTracker<Vec>::POSITION),
 		ring_length_(ring_length),
 		origin_(origin),
@@ -29,7 +29,7 @@ public:
 
 	virtual void output(){
 		typedef std::vector<double> bins;
-		typedef Particle<Vec> Part;
+		typedef Particle<Vec,Mat> Part;
 
 		bins b;
 

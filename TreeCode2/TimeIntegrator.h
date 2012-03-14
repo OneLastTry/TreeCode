@@ -43,9 +43,9 @@ public:
 	 * @param pusher		Particle pusher.
 	 */
 	TimeIntegrator(const Configuration<Vec>& conf,
-			std::vector<Particle<Vec>*>& particles,
+			std::vector<Particle<Vec,Mat>*>& particles,
 			Tree<Vec,Mat>& tree,
-			BoundaryConditions<Vec>& bounds,
+			BoundaryConditions<Vec,Mat>& bounds,
 			pusher::Pusher<Vec,Mat>& pusher,
 			const AcceptanceCriterion<Vec,Mat>& mac):
 		bounds_(bounds), particles_(particles), conf_(conf), pusher_(pusher),
@@ -63,6 +63,9 @@ public:
 	void start(potentials::Precision precision, unsigned int output_every){
 		long int num_steps = conf_.getMaxTime() / conf_.getTimestep();
 		for(long int i=0;i<num_steps;i++){
+			if(i == 2526)
+				std::cout << " ";
+
 			std::pair<double, double> energies = pusher_.push_particles(particles_, tree_, bounds_, precision, mac_);
 			bounds_.timestepOver();
 
@@ -71,7 +74,7 @@ public:
 				if(energies_out_ != NULL)
 					(*energies_out_) << (i * conf_.getTimestep()) << "\t" << energies.first << "\t" << energies.second << std::endl;
 
-				typedef output::ParticleTracker<Vec> track;
+				typedef output::ParticleTracker<Vec,Mat> track;
 				BOOST_FOREACH(track* t, particle_trackers_)
 					t->output();
 			}
@@ -97,13 +100,13 @@ public:
 	 * @brief Add particle tracker.
 	 * @param tracker Tracker.
 	 */
-	void addParticleTracker(output::ParticleTracker<Vec>* tracker){
+	void addParticleTracker(output::ParticleTracker<Vec,Mat>* tracker){
 		particle_trackers_.push_back(tracker);
 	}
 
 private:
-	BoundaryConditions<Vec>& bounds_;
-	std::vector<Particle<Vec>*>& particles_;
+	BoundaryConditions<Vec,Mat>& bounds_;
+	std::vector<Particle<Vec,Mat>*>& particles_;
 	const Configuration<Vec>& conf_;
 	pusher::Pusher<Vec,Mat>& pusher_;
 	Tree<Vec,Mat>& tree_;
@@ -111,7 +114,7 @@ private:
 	std::ofstream *energies_out_;
 	const AcceptanceCriterion<Vec,Mat>& mac_;
 
-	std::vector<output::ParticleTracker<Vec>* > particle_trackers_;
+	std::vector<output::ParticleTracker<Vec,Mat>* > particle_trackers_;
 };
 
 } /* namespace treecode */

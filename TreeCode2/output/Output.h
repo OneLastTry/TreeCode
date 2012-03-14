@@ -18,7 +18,7 @@ namespace treecode {
 
 namespace output {
 
-template <class Vec>
+template <class Vec, class Mat>
 class Output {
 public:
 	enum Record {
@@ -36,7 +36,7 @@ public:
 		out_ = new std::ofstream(filename, open_mode);
 	}
 
-	void particleOutput(const Particle<Vec>& p) const{
+	void particleOutput(const Particle<Vec,Mat>& p) const{
 		BOOST_FOREACH(Output::Record rec, records_){
 			switch(rec){
 			case Record::COORDINATES:

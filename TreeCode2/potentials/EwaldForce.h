@@ -48,7 +48,7 @@ public:
 	 */
 	EwaldForce(
 			const Configuration<Vec>& conf,
-			const BoundaryConditions<Vec>& bounds,
+			const BoundaryConditions<Vec,Mat>& bounds,
 			double alpha,
 			int real_space_iterations, int fourier_space_iterations) :
 			conf_(conf),
@@ -87,7 +87,7 @@ public:
 	 *
 	 * TODO: Pay attention to precision paremeter
 	 */
-	double getPotential(const Particle<Vec>& part, const Node<Vec, Mat>& node, Precision precision) const{
+	double getPotential(const Particle<Vec,Mat>& part, const Node<Vec, Mat>& node, Precision precision) const{
 		double potential = 0;
 
 		//We'll need this later.
@@ -158,7 +158,7 @@ public:
 	 *
 	 * TODO: Actually pay attention to precision.
 	 */
-	Vec getForce(const Particle<Vec>& part, const Node<Vec, Mat>& node, Precision precision) const{
+	Vec getForce(const Particle<Vec,Mat>& part, const Node<Vec, Mat>& node, Precision precision) const{
 		Vec force = Vec::Zero();
 
 		//This  is pretty much the same as getPotential(), but it obeys the formula
@@ -195,7 +195,7 @@ public:
 	}
 
 	//Not used
-	Vec real_space_force(const Particle<Vec>& p1, const Particle<Vec>& p2){
+	Vec real_space_force(const Particle<Vec,Mat>& p1, const Particle<Vec,Mat>& p2){
 		Vec force = Vec::Zero();
 		for (int i = -real_space_iterations_; i < real_space_iterations_; i++) {
 			for (int j = -real_space_iterations_; j < real_space_iterations_; j++) {
@@ -216,7 +216,7 @@ public:
 	}
 
 	//Not used
-	Vec fourier_space_force(const Particle<Vec>& p1, const Particle<Vec>& p2){
+	Vec fourier_space_force(const Particle<Vec,Mat>& p1, const Particle<Vec,Mat>& p2){
 		Vec force = Vec::Zero();
 
 		double L = bounds_.getSize();
@@ -239,7 +239,7 @@ public:
 	}
 
 	//Not used
-	double real_space_pot(const Particle<Vec>& p1, const Particle<Vec>& p2) {
+	double real_space_pot(const Particle<Vec,Mat>& p1, const Particle<Vec,Mat>& p2) {
 		double potential = 0;
 		for (int i = -real_space_iterations_; i < real_space_iterations_; i++) {
 			for (int j = -real_space_iterations_; j < real_space_iterations_; j++) {
@@ -254,7 +254,7 @@ public:
 	}
 
 	//Not used
-	double fourier_space_pot(const Particle<Vec>& p1, const Particle<Vec>& p2) {
+	double fourier_space_pot(const Particle<Vec,Mat>& p1, const Particle<Vec,Mat>& p2) {
 		double potential = 0;
 
 		double L = bounds_.getSize();
@@ -331,7 +331,7 @@ private:
 		return (-4.0*M_PI/(L*L*L) * outer_product) * A(h_norm) * cos(2.0*M_PI/L * h.dot(r0));
 	}
 	const Configuration<Vec>& conf_;
-	const BoundaryConditions<Vec>& bounds_;
+	const BoundaryConditions<Vec,Mat>& bounds_;
 protected:
 	double alpha_;
 	int real_space_iterations_, fourier_space_iterations_;

@@ -32,13 +32,13 @@ typedef Eigen::Vector3d Vec;
 typedef Eigen::Matrix3d Mat;
 
 namespace treecode {
-typedef Particle<Vec> 				Particle3d;
+typedef Particle<Vec,Mat> 				Particle3d;
 typedef Node<Vec,Mat>				Node3d;
 typedef Tree<Vec,Mat>				Tree3d;
 typedef TimeIntegrator<Vec, Mat> 	TimeIntegrator3d;
-typedef BoundaryConditions<Vec>		BoundaryConditions3d;
-typedef OpenBoundary<Vec>			OpenBoundary3d;
-typedef PeriodicBoundary<Vec>		PeriodicBoundary3d;
+typedef BoundaryConditions<Vec,Mat>		BoundaryConditions3d;
+typedef OpenBoundary<Vec,Mat>			OpenBoundary3d;
+typedef PeriodicBoundary<Vec,Mat>		PeriodicBoundary3d;
 typedef Configuration<Vec> 			Configuration3d;
 
 namespace pusher{

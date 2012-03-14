@@ -13,7 +13,7 @@
 
 namespace treecode {
 
-template <class Vec>
+template <class Vec, class Mat>
 class ReflectiveBoundary : public BoundaryConditions<Vec> {
 public:
 
@@ -32,7 +32,7 @@ public:
 	virtual ~PeriodicBoundary() {
 	}
 
-	virtual void particleMoved(treecode::Particle<Vec>* p){
+	virtual void particleMoved(treecode::Particle<Vec,Mat>* p){
 		Vec pos_vec = p->getPosition();
 		Vec vel_vec = p->getVelocity();
 		for(int i = 0; i < pos_vec.rows(); i++){

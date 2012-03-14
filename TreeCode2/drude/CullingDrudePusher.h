@@ -22,17 +22,19 @@ template<class Vec, class Mat, class RNG>
 class CullingDrudePusher : public DrudePusher<Vec, Mat>{
 public:
 	CullingDrudePusher(const Configuration<Vec>& config,
-			BoundaryConditions<Vec>& bounds,
+			BoundaryConditions<Vec,Mat>& bounds,
 			const distribution::VectorDistribution<RNG, Vec>& vel_dist,
+			DrudeMAC<Vec,Mat>& mac,
 			RNG& rng):
-				DrudePusher<Vec, Mat>(config, bounds),
+				DrudePusher<Vec, Mat>(config, bounds, mac),
 				vel_dist_(vel_dist), rng_(rng){}
 
-	std::pair<double, double> push_particles(std::vector<Particle<Vec>*> parts, Tree<Vec,Mat>& tree, BoundaryConditions<Vec>& bc,
+	std::pair<double, double> push_particles(std::vector<Particle<Vec,Mat>*> parts, Tree<Vec,Mat>& tree, BoundaryConditions<Vec,Mat>& bc,
 			potentials::Precision prec, const AcceptanceCriterion<Vec, Mat>& mac){
 
 		//If next particle step would take it across the entire system, reset velocity vector
-		BOOST_FOREACH(Particle<Vec>* p, parts){
+		typedef Particle<Vec,Mat> part_t;
+		BOOST_FOREACH(part_t* p, parts){
 			if(p->getVelocity().norm() * DrudePusher<Vec,Mat>::config_.getTimestep() > DrudePusher<Vec,Mat>::bounds_.getSize()){
 				p->setVelocity(vel_dist_.getVector(rng_));
 				std::cout << "Culling particle" << std::endl;

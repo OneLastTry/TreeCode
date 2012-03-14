@@ -33,7 +33,7 @@ public:
  * @param conf	Global configuration.
  * @param bc	Boundary conditions.
  */
-CoulombForceThreeD(const treecode::Configuration<Vec>& conf, const treecode::BoundaryConditions<Vec>& bc) :
+CoulombForceThreeD(const treecode::Configuration<Vec>& conf, const treecode::BoundaryConditions<Vec,Mat>& bc) :
 		configuration(conf), boundary(bc){}
 
 /**
@@ -63,7 +63,7 @@ CoulombForceThreeD(const treecode::Configuration<Vec>& conf, const treecode::Bou
  * @param precision	Precision used (monopole, dipole, quadrupole).
  * @return	Force due to node on part.
  */
-virtual Vec getForce(const Particle<Vec>& part, const Node<Vec,Mat>& node, Precision precision) const{
+virtual Vec getForce(const Particle<Vec,Mat>& part, const Node<Vec,Mat>& node, Precision precision) const{
 	Vec force = Vec::Zero();
 	Vec disp_vec = boundary.getDisplacementVector(part.getPosition(), node.getCentreOfCharge());
 	double r  = 1.0/disp_vec.norm();
@@ -117,7 +117,7 @@ virtual Vec getForce(const Particle<Vec>& part, const Node<Vec,Mat>& node, Preci
  * @param precision	Precision.
  * @return	Electric potential caused by node at part's position.
  */
-virtual double getPotential(const Particle<Vec>& part, const Node<Vec,Mat>& node, Precision precision) const{
+virtual double getPotential(const Particle<Vec,Mat>& part, const Node<Vec,Mat>& node, Precision precision) const{
 	double potential = 0;
 	Vec disp_vec = boundary.getDisplacementVector(part.getPosition(), node.getCentreOfCharge());
 	double r  = 1.0/disp_vec.norm();
@@ -147,7 +147,7 @@ virtual ~CoulombForceThreeD() {}
 
 private:
 	const treecode::Configuration<Vec>& configuration;
-	const treecode::BoundaryConditions<Vec>& boundary;
+	const treecode::BoundaryConditions<Vec,Mat>& boundary;
 };
 
 } /* namespace potentials */

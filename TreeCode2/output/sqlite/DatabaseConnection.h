@@ -40,13 +40,13 @@ public:
 		sqlite3_close(db_);
 	}
 
-	void write_init_particles(const std::vector<Particle<Vec>*>& parts){
+	void write_init_particles(const std::vector<Particle<Vec,Mat>*>& parts){
 		if(particles_init_stmt_ == NULL)
 			sqlite3_prepare_v2(db_, "INSERT INTO particles (id, charge, mass) "
 						"VALUES (:id, :charge, :mass)", -1, &particles_init_stmt_, NULL);
 
 		sqlite3_exec(db_, "BEGIN", NULL, NULL, NULL);
-		BOOST_FOREACH(Particle<Vec> *p, parts){
+		BOOST_FOREACH(Particle<Vec,Mat> *p, parts){
 
 			sqlite3_bind_int(particles_init_stmt_, 1, p->getId());
 			sqlite3_bind_int(particles_init_stmt_, 2, p->getCharge());
@@ -56,7 +56,7 @@ public:
 		}
 		sqlite3_exec(db_, "COMMIT", NULL, NULL, NULL);
 	}
-	void write_timestep_particles(unsigned int timestep, const std::vector<Particle<Vec>*>& parts){
+	void write_timestep_particles(unsigned int timestep, const std::vector<Particle<Vec,Mat>*>& parts){
 		if(particles_pos_stmt_ == NULL){
 			sqlite3_prepare_v2(db_, "INSERT INTO positions (particle_id, timestep, x, y, z) "
 				"VALUES (:id, :ts, :x, :y, :z)", -1, &particles_pos_stmt_, NULL);
@@ -66,7 +66,7 @@ public:
 		}
 
 		sqlite3_exec(db_, "BEGIN", NULL, NULL, NULL);
-		BOOST_FOREACH(Particle<Vec> *p, parts){
+		BOOST_FOREACH(Particle<Vec,Mat> *p, parts){
 			sqlite3_bind_int(particles_pos_stmt_, 1, p->getId());
 			sqlite3_bind_int(particles_vel_stmt_, 1, p->getId());
 			sqlite3_bind_int(particles_pos_stmt_, 2, timestep);

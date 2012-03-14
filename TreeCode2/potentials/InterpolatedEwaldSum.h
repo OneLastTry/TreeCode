@@ -64,7 +64,7 @@ class InterpolatedEwaldSum : public Potential<Vec, Mat>{
 public:
 	InterpolatedEwaldSum(
 			const Configuration<Vec>& conf,
-			const BoundaryConditions<Vec>& bounds,
+			const BoundaryConditions<Vec,Mat>& bounds,
 			unsigned int divisions,
 			const EwaldForce<Vec, Mat>& ewald_pot,
 			const CoulombForceThreeD<Vec, Mat>& coulomb_pot) :
@@ -111,7 +111,7 @@ public:
 		}
 	}
 
-	double getPotential(const Particle<Vec>& part, const Node<Vec, Mat>& node, Precision precision) const {
+	double getPotential(const Particle<Vec,Mat>& part, const Node<Vec, Mat>& node, Precision precision) const {
 		Vec disp_vec = bounds_.getDisplacementVector(part.getPosition(), node.getCentreOfCharge());
 		Vec centre_point = bounds_.getOrigin().array() + bounds_.getSize() / 2;
 		Vec disp_vec_to_centre = disp_vec + centre_point;
@@ -131,7 +131,7 @@ public:
 		return potential;
 	}
 
-	Vec getForce(const Particle<Vec>& part, const Node<Vec,Mat>& node, Precision precision) const {
+	Vec getForce(const Particle<Vec,Mat>& part, const Node<Vec,Mat>& node, Precision precision) const {
 		Vec disp_vec = bounds_.getDisplacementVector(part.getPosition(), node.getCentreOfCharge());
 		Vec centre_point = bounds_.getOrigin().array() + bounds_.getSize() / 2;
 		Vec disp_vec_to_centre = disp_vec + centre_point;
@@ -250,7 +250,7 @@ private:
 	multi_arr* field_;
 
 	const Configuration<Vec>& conf_;
-	const BoundaryConditions<Vec>& bounds_;
+	const BoundaryConditions<Vec,Mat>& bounds_;
 	unsigned int divisions_;
 	double length_per_div_;
 

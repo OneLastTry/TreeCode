@@ -17,7 +17,13 @@ template <class V, class M> class Node;
 template <class Vec, class Mat>
 class AcceptanceCriterion{
 public:
-	virtual bool accept(const Particle<Vec>& p, const Node<Vec,Mat>& n) const = 0;
+	enum result {
+		ACCEPT,
+		CONTINUE,
+		REJECT
+	};
+
+	virtual result accept(const Particle<Vec,Mat>& p, const Node<Vec,Mat>& n) const = 0;
 };
 }
 

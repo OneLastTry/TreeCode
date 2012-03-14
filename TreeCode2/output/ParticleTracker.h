@@ -17,7 +17,7 @@
 namespace treecode{
 namespace output{
 
-template <class Vec>
+template <class Vec, class Mat>
 class ParticleTracker{
 public:
 	enum token {
@@ -25,7 +25,7 @@ public:
 		VELOCITY
 	};
 
-	ParticleTracker(std::string filename, const std::vector<Particle<Vec>*>& parts, token record):
+	ParticleTracker(std::string filename, const std::vector<Particle<Vec,Mat>*>& parts, token record):
 		parts_(parts), record_(record){
 		if(filename.compare("stdout") == 0)
 			out_ = &std::cout;
@@ -42,7 +42,8 @@ public:
 
 
 	virtual void output(){
-		BOOST_FOREACH(Particle<Vec>* p, parts_){
+		typedef Particle<Vec,Mat> part_t;
+		BOOST_FOREACH(part_t* p, parts_){
 			if(record_ == POSITION){
 				for(unsigned int i = 0; i < p->getPosition().rows();i++)
 					(*out_) << p->getPosition()[i] << "\t";
@@ -55,7 +56,7 @@ public:
 	}
 protected:
 	std::ostream* out_;
-	const std::vector<Particle<Vec>* >& parts_;
+	const std::vector<Particle<Vec,Mat>* >& parts_;
 	token record_;
 };
 

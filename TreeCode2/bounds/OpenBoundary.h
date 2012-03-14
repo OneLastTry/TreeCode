@@ -18,8 +18,8 @@
 
 namespace treecode {
 
-template <class Vec>
-class OpenBoundary : public BoundaryConditions<Vec> {
+template <class Vec, class Mat>
+class OpenBoundary : public BoundaryConditions<Vec,Mat> {
 public:
 	/**
 	 * @class OpenBoundary
@@ -45,10 +45,11 @@ public:
 	 *
 	 * @param parts Particles in system.
 	 */
-	void init(const std::vector<treecode::Particle<Vec>*>& parts){
+	void init(const std::vector<treecode::Particle<Vec,Mat>*>& parts){
 		reset(parts.front());
 
-		BOOST_FOREACH(Particle<Vec>* p, parts){
+		typedef Particle<Vec,Mat> part_t;
+		BOOST_FOREACH(part_t* p, parts){
 			particleMoved(p);
 		}
 	}
@@ -67,7 +68,7 @@ public:
 	 * @brief Resets system to sane initial values.
 	 * @param p	An abitrary particle in the system.
 	 */
-	void reset(Particle<Vec>* p){
+	void reset(Particle<Vec,Mat>* p){
 		//Just reinit so that particleMoved() works properly.
 		minimum = p->getPosition().array();
 		maximum = p->getPosition().array();
@@ -78,7 +79,7 @@ public:
 	 * @brief Resize bounds when particle moves.
 	 * @param p	Particle moved.
 	 */
-	void particleMoved(treecode::Particle<Vec>* p){
+	void particleMoved(treecode::Particle<Vec,Mat>* p){
 		//If we are at the start of a new timestep, reset.
 		if(flag != 0)
 			reset(p);

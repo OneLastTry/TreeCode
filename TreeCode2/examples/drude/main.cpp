@@ -44,24 +44,25 @@ namespace po = boost::program_options;
 typedef Eigen::Vector2d Vec;
 typedef Eigen::Matrix2d Mat;
 
-Configuration<Vec> parse_cmd_line(int argc, char **argv, unsigned int& num_parts){
-//	OptionParser op(argc, argv);
-//	double dt, max_time, theta;
-//	bool display_help;
-//			op << new ArgOption<double>("--timestep", "-dt", "Individual timestep.", dt) <<
-//			new ArgOption<double>("--max-time", "-mt", "Maximum time to run to.", max_time) <<
-//			new ArgOption<double>("--theta", "-t", "Critical opening angle.", theta) <<
-//			new ArgOption<unsigned int>("--number", "-n", "Number of each species.", num_parts) <<
-//			new BoolOption("--help", "-h", "This help text.", display_help);
-//	unsigned int num_opts = op.parseOptions();
-//
-//	//If the user specified -h or not all options are set, display usage.
-//	if(display_help || num_opts != op.numOptions() - 1){
-//		op.display(std::cout);
-//		exit(0);
-//	}
-	num_parts = 10;
-	return Configuration<Vec>(2,0.0, 0.01, 100, 0, 0);
+
+Configuration<Vec> parse_cmd_line(int argc, char **argv, unsigned int& num_parts, double& radius){
+	OptionParser op(argc, argv);
+	double dt, max_time, theta;
+	bool display_help;
+			op << new ArgOption<double>("--timestep", "-dt", "Individual timestep.", dt) <<
+			new ArgOption<double>("--max-time", "-mt", "Maximum time to run to.", max_time) <<
+			new ArgOption<double>("--theta", "-t", "Critical opening angle.", theta) <<
+			new ArgOption<unsigned int>("--number", "-n", "Number of each species.", num_parts) <<
+			new ArgOption<double>("--radius", "-r", "Radius of each big particle.", radius) <<
+			new BoolOption("--help", "-h", "This help text.", display_help);
+	unsigned int num_opts = op.parse();
+
+	//If the user specified -h or not all options are set, display usage.
+	if(display_help || num_opts != op.size() - 1){
+		op.display(std::cout);
+		exit(0);
+	}
+	return Configuration<Vec>(2, theta, dt, max_time, 0.3333333333, 0);
 }
 
 int main(int argc, char **argv) {
@@ -70,18 +71,18 @@ int main(int argc, char **argv) {
 	using namespace treecode::pusher;
 	using namespace treecode::output;
 
-	typedef Particle<Vec> Particle_t;
-	typedef BigParticle<Vec> BigParticle_t;
+	typedef Particle<Vec,Mat> Particle_t;
+	typedef BigParticle<Vec,Mat> BigParticle_t;
 
 
 	using boost::mt19937;
 	mt19937 rng;
 
 
-	double temperature = 1;
+	double temperature = 1, radius;
 	unsigned int num_particles;
 	std::string dbname;
-	Configuration<Vec> c = parse_cmd_line(argc, argv, num_particles);
+	Configuration<Vec> c = parse_cmd_line(argc, argv, num_particles, radius);
 
 
 	double length = 100;
@@ -98,29 +99,30 @@ int main(int argc, char **argv) {
 	vector<BigParticle_t*> big_ions;
 	vector<Particle_t*> electrons;
 
-	for(double x = -45; x < 50; x+= 15){
-		for(double y = -45; y < 50; y+= 15){
-			big_ions.push_back(new BigParticle<Vec>(+1, 100000, Vec(x,y), Vec(0,0), id, 5));
+
+	for(double x = -45; x < 50; x+= 10){
+		for(double y = -45; y < 50; y+= 10){
+			big_ions.push_back(new BigParticle<Vec,Mat>(+1, 100000, Vec(x,y), Vec(0,0), id, radius));
 		}
 	}
 
 	ParticleAvoidingDistribution<mt19937, Vec, BigParticle_t> pos_vec(origin, max, big_ions);
-	electrons = Particle<Vec>::generateParticles(num_particles, 1, rng, pos_vec, e_velocity_dist, electron_charges, id);
+	electrons = Particle<Vec,Mat>::generateParticles(num_particles, 1, rng, pos_vec, e_velocity_dist, electron_charges, id);
 
 
 	parts.insert(parts.end(), big_ions.begin(), big_ions.end());
 	parts.insert(parts.end(), electrons.begin(), electrons.end());
 
-	CountingPeriodicBounds<Vec>	bounds(c, origin, length, cerr);
-	CullingDrudePusher<Vec, Mat, mt19937> 	push(c, bounds, e_velocity_dist, rng);
-	DrudeMAC<Vec, Mat>		mac(c.getTimestep());
+	CountingPeriodicBounds<Vec,Mat>	bounds(c, origin, length, cerr);
+	DrudeMAC<Vec, Mat>		mac(bounds, c.getTimestep());
+	CullingDrudePusher<Vec, Mat, mt19937> 	push(c, bounds, e_velocity_dist, mac, rng);
 	Tree<Vec,Mat>			tree(c, bounds, parts);
 	TimeIntegrator<Vec,Mat>	integrator(c, electrons, tree, bounds, push, mac);
 	integrator.setEnergyOutputFile("energies.csv");
 
 
-	integrator.addParticleTracker(new ParticleTracker<Vec>("positions.csv", parts, ParticleTracker<Vec>::POSITION));
-	integrator.addParticleTracker(new ParticleTracker<Vec>("velocities.csv", parts, ParticleTracker<Vec>::VELOCITY));
+	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("positions.csv", parts, ParticleTracker<Vec,Mat>::POSITION));
+	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("velocities.csv", parts, ParticleTracker<Vec,Mat>::VELOCITY));
 
 
 	integrator.start(quadrupole, 1);

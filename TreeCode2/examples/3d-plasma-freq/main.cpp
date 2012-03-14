@@ -108,8 +108,8 @@ int main(int argc, char **argv) {
 	Tree3d					tree(c, bounds, parts);
 	TimeIntegrator3d		integrator(c, parts, tree, bounds, push, mac);
 	integrator.setEnergyOutputFile("energies.csv");
-	integrator.addParticleTracker(new ParticleTracker<Vec>("positions.csv", parts, ParticleTracker<Vec>::POSITION));
-	integrator.addParticleTracker(new ParticleTracker<Vec>("velocities.csv", parts, ParticleTracker<Vec>::VELOCITY));
+	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("positions.csv", parts, ParticleTracker<Vec,Mat>::POSITION));
+	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("velocities.csv", parts, ParticleTracker<Vec,Mat>::VELOCITY));
 
 	cout << "Initialising pusher" << endl;
 

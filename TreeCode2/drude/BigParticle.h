@@ -11,13 +11,13 @@
 #include "../Particle.h"
 
 namespace treecode{
-template <class Vec>
-class BigParticle : public Particle<Vec>{
+template <class Vec, class Mat>
+class BigParticle : public Particle<Vec,Mat>{
 public:
 	BigParticle(int q, int m, const Vec& pos, const Vec& vel, unsigned int id, double radius):
-		Particle<Vec>(q,m,pos,vel,id), radius_(radius){}
+		Particle<Vec,Mat>(q,m,pos,vel,id), radius_(radius){}
 
-	double getRadius(){return radius_;}
+	double getRadius()const {return radius_;}
 
 private:
 	double radius_;

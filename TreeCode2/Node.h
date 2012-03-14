@@ -40,7 +40,7 @@ public:
 	 * @param sz
 	 */
 	Node(const Configuration<Vec>& conf, const Vec& pos, double sz) :
-			configuration(conf), position(pos), size(sz), charge(0), abs_charge(0) {}
+			configuration(conf), position(pos), size(sz), charge(0), abs_charge(0), parent_(NULL) {}
 
 	/**
 	 * @brief Split node into separate daughters.
@@ -72,6 +72,7 @@ public:
 			calculateMonopoleMoment();
 			calculateDipoleMoment();
 			calculateQuadrupoleMoment();
+			particles.front()->setParent(this);
 			return;
 		}else{
 			if(getStatus() != ROOT)
@@ -89,15 +90,19 @@ public:
 					pos[j] = this->position[j] + this->size / 2 * ((i >> j) & 1);
 				}
 				if(daughters.size() != configuration.getMaxChildren()){
-					daughters.push_back(new Node<Vec,Mat>(configuration, pos, this->size/2));
+					Node<Vec,Mat> *new_node = new Node<Vec,Mat>(configuration, pos, this->size/2);
+					new_node->setParent(this);
+					daughters.push_back(new_node);
 				}else {
 					daughters[i]->clearParticles();
 					daughters[i]->setPosition(pos);
 					daughters[i]->setSize(this->size/2);
+					daughters[i]->setParent(this);
 				}
 			}
 
-			BOOST_FOREACH(Particle<Vec>* p, particles){
+			typedef Particle<Vec,Mat> part_t;
+			BOOST_FOREACH(part_t* p, particles){
 				//This finds which quadrant/octant of the parent the particle is in
 				unsigned int index = 0;
 				for (unsigned int j = 0; j < configuration.getNumDimensions(); j++) {
@@ -137,7 +142,7 @@ public:
 	 * @param[out] ilist	Interaction list for particle.
 	 * @param bounds	Boundary conditions of system.
 	 */
-	void addToInteractionList(const Particle<Vec>& p, std::vector<Node*>& ilist, const BoundaryConditions<Vec>& bounds,
+	void addToInteractionList(const Particle<Vec,Mat>& p, std::vector<Node*>& ilist, const BoundaryConditions<Vec,Mat>& bounds,
 			const AcceptanceCriterion<Vec,Mat>& mac){
 
 		//If the current node is empty, do nothing.
@@ -146,11 +151,14 @@ public:
 			return;
 
 		//Either add to ilist or recurse into daughters.
-		if(mac.accept(p, *this)){
+		typename AcceptanceCriterion<Vec,Mat>::result res = mac.accept(p, *this);
+		if(res == AcceptanceCriterion<Vec,Mat>::ACCEPT){
 			ilist.push_back(this);
-		}else{
+		}else if(res == AcceptanceCriterion<Vec,Mat>::CONTINUE){
 			BOOST_FOREACH(Node* d, daughters)
 				d->addToInteractionList(p, ilist, bounds, mac);
+		}else if(res == AcceptanceCriterion<Vec,Mat>::REJECT){
+			return;
 		}
 	}
 
@@ -281,7 +289,7 @@ public:
 	 * @brief Add particle to node.
 	 * @param p	Particle to add.
 	 */
-	void addParticle(Particle<Vec>* p){particles.push_back(p);};
+	void addParticle(Particle<Vec,Mat>* p){particles.push_back(p);};
 
 	/**
 	 * @brief Get number of particles contained within this Node.
@@ -293,7 +301,7 @@ public:
 	 * @brief Set particles in bulk form.
 	 * @param p	Vector of Particle%s to assign.
 	 */
-	void setParticles(std::vector<Particle<Vec>*> p){particles = p;}
+	void setParticles(std::vector<Particle<Vec,Mat>*> p){particles = p;}
 	/**
 	 * @brief Set position (origin) of node.
 	 *
@@ -355,7 +363,7 @@ public:
 	 * @brief Get list of particles.
 	 * @return Particles.
 	 */
-	const std::vector<Particle<Vec>* >& getParticles() const {return particles;}
+	const std::vector<Particle<Vec,Mat>* >& getParticles() const {return particles;}
 
 	/**
 	 * @brief Get size of node.
@@ -363,11 +371,23 @@ public:
 	 */
 	double getSize() const {return size; }
 
+	/**
+	 * @brief Set parent node.
+	 * @param parent Parent node.
+	 */
+	void setParent(Node<Vec,Mat>* parent){parent_ = parent;}
+
+	/**
+	 * @brief Get Parent node.
+	 * @return Parent node.
+	 */
+	Node<Vec,Mat>* getParent() const {return parent_;}
+
 private:
 	const Configuration<Vec>& configuration;
 	Vec position;
 	double size;
-	std::vector<Particle<Vec>*> particles;
+	std::vector<Particle<Vec,Mat>*> particles;
 	std::vector<Node<Vec,Mat>*> daughters;
 	Node::tree_status status;
 
@@ -376,6 +396,8 @@ private:
 	Vec centre_of_charge;
 	Vec dipole_moments;
 	Mat quadrupole_moments;
+
+	Node<Vec,Mat>* parent_;
 };
 
 } /* namespace treecode */

@@ -15,11 +15,11 @@
 
 namespace treecode {
 
-template <class Vec>
-class CountingPeriodicBounds : public PeriodicBoundary<Vec> {
+template <class Vec, class Mat>
+class CountingPeriodicBounds : public PeriodicBoundary<Vec, Mat> {
 public:
 	CountingPeriodicBounds(Configuration<Vec> c, Vec origin, double length, std::ostream& output) :
-		PeriodicBoundary<Vec>(c, origin, length),
+		PeriodicBoundary<Vec, Mat>(c, origin, length),
 		output_(output),
 		left_edge_(Vec::Zero()), right_edge_(Vec::Zero()){}
 
@@ -31,20 +31,20 @@ public:
 	 *
 	 * @param p	Particle to move.
 	 */
-	void particleMoved(treecode::Particle<Vec>* p){
+	void particleMoved(treecode::Particle<Vec,Mat>* p){
 		Vec translation_vector = Vec::Zero();
 
 		for (int i = 0; i < p->getPosition().rows(); i++) {
 			double component = p->getPosition()[i];
-			if(component < PeriodicBoundary<Vec>::origin_[i]){
+			if(component < PeriodicBoundary<Vec, Mat>::origin_[i]){
 				if(p->getCharge() == -1)
 					left_edge_[i] += 1;
-				translation_vector[i] = PeriodicBoundary<Vec>::length_;
+				translation_vector[i] = PeriodicBoundary<Vec, Mat>::length_;
 			}
-			else if(component > PeriodicBoundary<Vec>::origin_[i] + PeriodicBoundary<Vec>::length_){
+			else if(component > PeriodicBoundary<Vec, Mat>::origin_[i] + PeriodicBoundary<Vec, Mat>::length_){
 				if(p->getCharge() == -1)
 					right_edge_[i] += 1;
-				translation_vector[i] = -PeriodicBoundary<Vec>::length_;
+				translation_vector[i] = -PeriodicBoundary<Vec, Mat>::length_;
 			}
 		}
 		p->updatePosition(translation_vector);

@@ -12,8 +12,9 @@
 
 namespace treecode {
 
+template <class Vec, class Mat> class Node;
 
-template <class Vec>
+template <class Vec, class Mat>
 class Particle{
 public:
 	/**
@@ -36,7 +37,7 @@ public:
 	 * @param id	A unique global ID (for data storage).
 	 */
 	Particle(int q, int m, const Vec& pos, const Vec& vel, unsigned int id) :
-			charge(q), mass(m), position(pos), velocity(vel), id_(id){}
+			charge(q), mass(m), position(pos), velocity(vel), id_(id), parent_(NULL){}
 
 	/**
 	 * @brief Destructor. Nothing needs to be done.
@@ -135,7 +136,7 @@ public:
     		const distribution::ChargeDistribution<RNG>& charge_dist,
     		int& id){
     	//Create the vector and reserve the number of particles.
-    	std::vector<Particle<Vec>*> parts;
+    	std::vector<Particle<Vec,Mat>*> parts;
     	parts.reserve(num_particles);
     	for (unsigned int i = 0; i < num_particles; i++, id++) {
     		//Get charge, position and velocity from supplied distributions.
@@ -143,7 +144,7 @@ public:
     		Vec pos = position_dist.getVector(rng);
     		Vec vel = velocity_dist.getVector(rng);
     		//Generate a new particle, and add to vector.
-    		Particle* p = new Particle<Vec>(charge, mass, pos, vel, id);
+    		Particle* p = new Particle<Vec,Mat>(charge, mass, pos, vel, id);
     		parts.push_back(p);
     	}
     	return parts;
@@ -162,11 +163,14 @@ public:
     	}
     }
 
+    void setParent(Node<Vec,Mat>* parent){parent_ = parent;}
+    Node<Vec,Mat>* getParent() const {return parent_;}
+
 private:
 	int charge, mass;
 	Vec position, velocity;
 	unsigned int id_;
-	static int global_id;
+	Node<Vec,Mat>* parent_;
 };
 
 } /* namespace treecode */

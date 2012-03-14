@@ -8,7 +8,7 @@
 
 namespace treecode {
 
-template <class Vec>
+template <class Vec, class Mat>
 class BoundaryConditions {
 	/**
 	 * @class BoundaryConditions
@@ -23,7 +23,7 @@ public:
 	 *
 	 * @param p Particle that has moved.
 	 */
-	virtual void particleMoved(treecode::Particle<Vec>* p) = 0;
+	virtual void particleMoved(treecode::Particle<Vec,Mat>* p) = 0;
 
 	/**
 	 * @brief Called whenever a timestep is over.

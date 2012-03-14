@@ -38,7 +38,7 @@ public:
 	 * @param bc		Boundary conditions the tree will obey.
 	 * @param parts		Vector of particles that the tree is constructed around.
 	 */
-	Tree(const Configuration<Vec>& conf, const BoundaryConditions<Vec>& bc, const std::vector<Particle<Vec>*>& parts):
+	Tree(const Configuration<Vec>& conf, const BoundaryConditions<Vec, Mat>& bc, const std::vector<Particle<Vec,Mat>*>& parts):
 		configuration(conf), boundary(bc), particles(parts){
 		//Create a root node using config and boundary conditions
 		root = new Node<Vec,Mat>(conf, bc.getOrigin(), bc.getSize());
@@ -71,7 +71,7 @@ public:
 	 * @param p		Particle to generate the list for.231
 	 * @param[out] ilist	Nodes to interact with will be placed here.
 	 */
-	void getInteractionList(const Particle<Vec>& p, std::vector<Node<Vec,Mat>*>& ilist, const AcceptanceCriterion<Vec,Mat>& mac) const{
+	void getInteractionList(const Particle<Vec,Mat>& p, std::vector<Node<Vec,Mat>*>& ilist, const AcceptanceCriterion<Vec,Mat>& mac) const{
 		//Make sure the list is clear, and then delegate to the root node.
 		ilist.clear();
 		root->addToInteractionList(p, ilist, boundary, mac);
@@ -139,8 +139,8 @@ public:
 
 private:
 	const Configuration<Vec>& configuration;
-	const BoundaryConditions<Vec>& boundary;
-	const std::vector<Particle<Vec>*>& particles;
+	const BoundaryConditions<Vec,Mat>& boundary;
+	const std::vector<Particle<Vec,Mat>*>& particles;
 	Node<Vec,Mat>* root;
 };
 
