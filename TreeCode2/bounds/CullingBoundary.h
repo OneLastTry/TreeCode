@@ -45,7 +45,7 @@ public:
 	 */
 	CullingBoundary(const Configuration<Vec>& conf, const Vec origin, double length,
 			const distribution::VectorDistribution<RNG,Vec>& vel_dist,
-			std::vector<bool> min_reset, std::vector<bool> max_reset,
+			bool* min_reset, bool* max_reset,
 			RNG& rng):
 		PeriodicBoundary<Vec,Mat>(conf, origin, length), 	//Parent class
 		vel_dist_(vel_dist),								//Velocity distribution
@@ -100,7 +100,7 @@ public:
 
 protected:
 	const distribution::VectorDistribution<RNG,Vec>& vel_dist_;
-	std::vector<bool> min_reset_, max_reset_;
+	bool *min_reset_, *max_reset_;
 	RNG& rng_;
 	Vec right_edge_, left_edge_;
 };

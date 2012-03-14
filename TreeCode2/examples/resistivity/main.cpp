@@ -87,8 +87,8 @@ int main(int argc, char **argv) {
 
 
 	std::ofstream fout("count.csv");
-	std::vector<bool> min_reset = {true, false, false};
-	std::vector<bool> max_reset = {true, false, false};
+	bool min_reset[] = {true, false, false};
+	bool max_reset[] = {true, false, false};
 	CullingBoundary<Vec,Mat,mt19937> bounds(c, Vec(0,0,0), length, e_velocity_dist, min_reset, max_reset, rng);
 
 	CoulombForceEField<Vec, Mat> open_pot(c, bounds, Vec(100, 0, 0));
