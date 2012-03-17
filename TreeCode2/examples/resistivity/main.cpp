@@ -88,12 +88,12 @@ int main(int argc, char **argv) {
 
 	std::ofstream fout("count.csv");
 	bool min_reset[] = {true, false, false};
-	bool max_reset[] = {true, false, false};
+	bool max_reset[] = {false, false, false};
 	CullingBoundary<Vec,Mat,mt19937> bounds(c, Vec(0,0,0), length, e_velocity_dist, min_reset, max_reset, rng);
 
 	CoulombForceEField<Vec, Mat> open_pot(c, bounds, Vec(100, 0, 0));
 	EwaldForce3d			periodic_pot(c, bounds, 2.0 / length, 5, 5);
-	InterpolatedEwaldSum3d	potential(c, bounds, 30, periodic_pot, open_pot);
+	InterpolatedEwaldSum3d	potential(c, bounds, 20, periodic_pot, open_pot);
 	potential.init();
 	BarnesHutMAC<Vec,Mat>	mac(c.getTheta(), bounds);
 	LeapfrogPusher3d 		push(c, bounds, potential);
@@ -101,6 +101,7 @@ int main(int argc, char **argv) {
 	TimeIntegrator3d		integrator(c, parts, tree, bounds, push, mac);
 
 	integrator.setEnergyOutputFile("energies.csv");
+	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("velocities.csv", electrons, ParticleTracker<Vec,Mat>::VELOCITY));
 
 	push.init(parts, tree, quadrupole, mac);
 

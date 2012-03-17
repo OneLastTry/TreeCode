@@ -74,15 +74,35 @@ public:
 				left_edge_[i] ++;
 				translation_vector[i] = parent::length_;
 				//Reset velocity if told to
-				if(min_reset_[i])
-					p->setVelocity(vel_dist_.getVector(rng_));
+				if(min_reset_[i]){
+					Vec vel;
+					//If the particle has just disappeared to the left, and
+					//we put it backin on the right, we don't want it immediately
+					//whizzing off back to the right again, so choose a particle
+					//going left.
+					do{
+						vel = vel_dist_.getVector(rng_);
+					}while(vel[i] > 0);
+
+					p->setVelocity(vel);
+					translation_vector[i] += parent::origin_[i] - p->getPosition()[i]-parent::length_/1000;
+				}
 			}
 			else if(component > parent::origin_[i] + parent::length_){
 				right_edge_[i]++;
 				translation_vector[i] = -parent::length_;
 				//Reset velocity if told to
-				if(max_reset_[i])
-					p->setVelocity(vel_dist_.getVector(rng_));
+				if(max_reset_[i]){
+					Vec vel;
+					//Opposite of above.
+					do{
+						vel = vel_dist_.getVector(rng_);
+					}while(vel[i] < 0);
+
+					p->setVelocity(vel);
+					//Move to zero
+					translation_vector[i] -= p->getPosition()[i] - (parent::origin_[i] + parent::length_)-parent::length_/1000;
+				}
 			}
 		}
 		p->updatePosition(translation_vector);
