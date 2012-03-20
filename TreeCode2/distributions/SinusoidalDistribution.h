@@ -5,7 +5,6 @@
 
 #include "Distribution.h"
 #include "UniformDistribution.h"
-#include "../Configuration.h"
 #include <cmath>
 #include <boost/random/uniform_real.hpp>
 #include <Eigen/Dense>

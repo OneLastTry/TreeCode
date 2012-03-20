@@ -39,7 +39,6 @@ typedef TimeIntegrator<Vec, Mat> 	TimeIntegrator3d;
 typedef BoundaryConditions<Vec,Mat>		BoundaryConditions3d;
 typedef OpenBoundary<Vec,Mat>			OpenBoundary3d;
 typedef PeriodicBoundary<Vec,Mat>		PeriodicBoundary3d;
-typedef Configuration<Vec> 			Configuration3d;
 
 namespace pusher{
 typedef LeapfrogPusher<Vec, Mat> 							LeapfrogPusher3d;

@@ -11,7 +11,6 @@
 #include "Potential.h"
 #include "../bounds/BoundaryConditions.h"
 #include "../Particle.h"
-#include "../Configuration.h"
 #include "../Node.h"
 //#include "InterpolatedEwaldSum.h"
 
@@ -40,19 +39,17 @@ public:
 
 	/**
 	 * @brief Construct a new EwaldForce object.
-	 * @param conf		Global configuration. Mainly used for force softening param.
 	 * @param bounds	Boundary conditions. These should be <em>periodic</em> boundaries.
 	 * @param alpha		Coupling parameter. Usually @f$ \alpha \approx 2 / L @f$, where @f$ L @f$ is system size.
 	 * @param real_space_iterations		Number of iterations to perform in real space.
 	 * @param fourier_space_iterations	Number of iterations to perform in Fourier space.
 	 */
 	EwaldForce(
-			const Configuration<Vec>& conf,
+			double force_softening,
 			const BoundaryConditions<Vec,Mat>& bounds,
 			double alpha,
 			int real_space_iterations, int fourier_space_iterations) :
-			conf_(conf),
-			bounds_(bounds), alpha_(alpha),
+			bounds_(bounds), fs_(force_softening), alpha_(alpha),
 			real_space_iterations_(real_space_iterations),
 			fourier_space_iterations_(fourier_space_iterations) {
 
@@ -107,7 +104,7 @@ public:
 					//This is because we can be close to particles in the neighbours too
 					//I'm not entirely sure this is right, but it seems so.
 					if(i >= -1 && i <= 1 && j >= -1 && j <= 1 && k >= -1 && k <= 1)
-						r_n_norm = sqrt(r_n_norm*r_n_norm + conf_.getForceSoftening()*conf_.getForceSoftening());
+						r_n_norm = sqrt(r_n_norm*r_n_norm + fs_*fs_);
 
 					//Then actually add contributions.
 					potential += node.getCharge() * a0_real(r_n, r_n_norm);
@@ -135,7 +132,7 @@ public:
 		}
 		//Apply self energy correction
 		potential -= 2 * alpha_ / SQRT_PI * node.getCharge();
-		return potential / (3 * conf_.getDensity());
+		return potential;
 	}
 
 	/**
@@ -170,7 +167,7 @@ public:
 					r_n += (part.getPosition() - node.getCentreOfCharge());
 					double r_n_norm = r_n.norm();
 					if(i >= -1 && i <= 1 && j >= -1 && j <= 1 && k >= -1 && k <= 1)
-						r_n_norm = sqrt(r_n_norm*r_n_norm + conf_.getForceSoftening()*conf_.getForceSoftening());
+						r_n_norm = sqrt(r_n_norm*r_n_norm + fs_*fs_);
 
 					force += node.getCharge() * a1_real(r_n, r_n_norm);
 					force += a2_real(r_n, r_n_norm) * node.getDipoleMoments();
@@ -191,7 +188,7 @@ public:
 			}
 		}
 
-		return part.getCharge() *  force / (3 * conf_.getDensity());
+		return part.getCharge() *  force;
 	}
 
 	//Not used
@@ -330,9 +327,9 @@ private:
 		double L = bounds_.getSize();
 		return (-4.0*M_PI/(L*L*L) * outer_product) * A(h_norm) * cos(2.0*M_PI/L * h.dot(r0));
 	}
-	const Configuration<Vec>& conf_;
 	const BoundaryConditions<Vec,Mat>& bounds_;
 protected:
+	double fs_;
 	double alpha_;
 	int real_space_iterations_, fourier_space_iterations_;
 };

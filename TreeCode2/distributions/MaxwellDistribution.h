@@ -8,7 +8,6 @@
 #include <cmath>
 
 #include "Distribution.h"
-#include "../Configuration.h"
 
 namespace treecode {
 namespace distribution {

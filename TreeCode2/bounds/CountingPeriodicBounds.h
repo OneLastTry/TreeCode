@@ -8,7 +8,6 @@
 #ifndef COUNTINGPERIODICBOUNDS_H_
 #define COUNTINGPERIODICBOUNDS_H_
 
-#include "../Configuration.h"
 #include "PeriodicBoundary.h"
 #include <fstream>
 #include <iostream>
@@ -18,8 +17,8 @@ namespace treecode {
 template <class Vec, class Mat>
 class CountingPeriodicBounds : public PeriodicBoundary<Vec, Mat> {
 public:
-	CountingPeriodicBounds(Configuration<Vec> c, Vec origin, double length, std::ostream& output) :
-		PeriodicBoundary<Vec, Mat>(c, origin, length),
+	CountingPeriodicBounds(Vec origin, double length, std::ostream& output) :
+		PeriodicBoundary<Vec, Mat>(origin, length),
 		output_(output),
 		left_edge_(Vec::Zero()), right_edge_(Vec::Zero()){}
 

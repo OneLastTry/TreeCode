@@ -8,7 +8,6 @@
 #include <fstream>
 #include <boost/foreach.hpp>
 
-#include "Configuration.h"
 #include "Particle.h"
 #include "bounds/BoundaryConditions.h"
 #include "macs/AcceptanceCriterion.h"
@@ -35,12 +34,11 @@ public:
 
 	/**
 	 * @brief Construct a new Node object.
-	 * @param conf
 	 * @param pos
 	 * @param sz
 	 */
-	Node(const Configuration<Vec>& conf, const Vec& pos, double sz) :
-			configuration(conf), position(pos), size(sz), charge(0), abs_charge(0), parent_(NULL) {}
+	Node(const Vec& pos, double sz) :
+		position(pos), size(sz), charge(0), abs_charge(0), parent_(NULL) {}
 
 	/**
 	 * @brief Split node into separate daughters.
@@ -78,19 +76,19 @@ public:
 			if(getStatus() != ROOT)
 				setStatus(BRANCH);
 
-			//Create daughters
-			for (unsigned int i = 0; i < configuration.getMaxChildren(); i++) {
-				Vec pos(configuration.getNumDimensions());
+			//Create daughters (There are 2^dimensions daughters)
+			for (unsigned int i = 0; i < (2u << position.rows()); i++) {
+				Vec pos;
 				//Set each component of the position
-				for (unsigned int j = 0; j < configuration.getNumDimensions(); j++) {
+				for (unsigned int j = 0; j < pos.rows(); j++) {
 					//Each component is either this->position[j] or
 					//this->position[j] + this->size / 2.
 					//This can be representing by just shifting the daughter
 					//index down by the component index and ANDing with 0x01.
 					pos[j] = this->position[j] + this->size / 2 * ((i >> j) & 1);
 				}
-				if(daughters.size() != configuration.getMaxChildren()){
-					Node<Vec,Mat> *new_node = new Node<Vec,Mat>(configuration, pos, this->size/2);
+				if(daughters.size() != (2u << position.rows())){
+					Node<Vec,Mat> *new_node = new Node<Vec,Mat>(pos, this->size/2);
 					new_node->setParent(this);
 					daughters.push_back(new_node);
 				}else {
@@ -105,7 +103,7 @@ public:
 			BOOST_FOREACH(part_t* p, particles){
 				//This finds which quadrant/octant of the parent the particle is in
 				unsigned int index = 0;
-				for (unsigned int j = 0; j < configuration.getNumDimensions(); j++) {
+				for (unsigned int j = 0; j < position.rows(); j++) {
 					//This will be either 0 or 1, depending on which side
 					//of the parent the particle is. To flatten this into
 					//A one-dimensional array, shift it up into index.
@@ -384,7 +382,6 @@ public:
 	Node<Vec,Mat>* getParent() const {return parent_;}
 
 private:
-	const Configuration<Vec>& configuration;
 	Vec position;
 	double size;
 	std::vector<Particle<Vec,Mat>*> particles;

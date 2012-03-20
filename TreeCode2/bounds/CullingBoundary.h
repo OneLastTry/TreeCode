@@ -9,7 +9,6 @@
 #define CULLINGBOUNDARY_H_
 
 #include "BoundaryConditions.h"
-#include "../Configuration.h"
 #include <vector>
 
 namespace treecode {
@@ -36,18 +35,17 @@ public:
 	 * will be reset when going going past the minimum value in the
 	 * z axis and past the maximum value on the x axis.
 	 *
-	 * @param conf		Configuration.
 	 * @param origin	Origin of system.
 	 * @param length	Length of each side of the system.
 	 * @param vel_dist	Velocity distribution
 	 * @param min_reset	Describes which boundaries to reset at.
 	 * @param max_reset Describes which boundaries to reset at.
 	 */
-	CullingBoundary(const Configuration<Vec>& conf, const Vec origin, double length,
+	CullingBoundary(const Vec origin, double length,
 			const distribution::VectorDistribution<RNG,Vec>& vel_dist,
 			bool* min_reset, bool* max_reset,
 			RNG& rng):
-		PeriodicBoundary<Vec,Mat>(conf, origin, length), 	//Parent class
+		PeriodicBoundary<Vec,Mat>(origin, length), 	//Parent class
 		vel_dist_(vel_dist),								//Velocity distribution
 		min_reset_(min_reset), max_reset_(max_reset),		//Min/max reset
 		rng_(rng), right_edge_(Vec::Zero()), left_edge_(Vec::Zero())

@@ -14,7 +14,6 @@
 #include "Particle.h"
 #include "Tree.h"
 #include "Node.h"
-#include "Configuration.h"
 #include "bounds/BoundaryConditions.h"
 #include "pushers/pusher.h"
 #include "potentials/Potential.h"
@@ -36,19 +35,20 @@ public:
 
 	/**
 	 * @brief Instantiate new TimeIntegrator.
-	 * @param conf			Configuration.
 	 * @param particles		List of particles.
 	 * @param tree			Tree.
 	 * @param bounds		Boundary conditions.
 	 * @param pusher		Particle pusher.
 	 */
-	TimeIntegrator(const Configuration<Vec>& conf,
+	TimeIntegrator(
+			double timestep, double max_time,
 			std::vector<Particle<Vec,Mat>*>& particles,
 			Tree<Vec,Mat>& tree,
 			BoundaryConditions<Vec,Mat>& bounds,
 			pusher::Pusher<Vec,Mat>& pusher,
 			const AcceptanceCriterion<Vec,Mat>& mac):
-		bounds_(bounds), particles_(particles), conf_(conf), pusher_(pusher),
+		dt_(timestep), max_time_(max_time),
+		bounds_(bounds), particles_(particles), pusher_(pusher),
 		tree_(tree), energies_out_(NULL), mac_(mac)
 	{}
 
@@ -61,7 +61,7 @@ public:
 	 * @param energy_file	File to output energies to (or NULL).
 	 */
 	void start(potentials::Precision precision, unsigned int output_every){
-		long int num_steps = conf_.getMaxTime() / conf_.getTimestep();
+		long int num_steps = max_time_/dt_;
 		for(long int i=0;i<num_steps;i++){
 			if(i == 2526)
 				std::cout << " ";
@@ -72,7 +72,7 @@ public:
 			std::cout << "Timestep " << i << " of " << num_steps << " complete (" << ((float)i/(float)num_steps)*100 << "%)" << std::endl;
 			if( (i%output_every) == 0){
 				if(energies_out_ != NULL)
-					(*energies_out_) << (i * conf_.getTimestep()) << "\t" << energies.first << "\t" << energies.second << std::endl;
+					(*energies_out_) << (i * dt_) << "\t" << energies.first << "\t" << energies.second << std::endl;
 
 				typedef output::ParticleTracker<Vec,Mat> track;
 				BOOST_FOREACH(track* t, particle_trackers_)
@@ -105,9 +105,9 @@ public:
 	}
 
 private:
+	double dt_, max_time_;
 	BoundaryConditions<Vec,Mat>& bounds_;
 	std::vector<Particle<Vec,Mat>*>& particles_;
-	const Configuration<Vec>& conf_;
 	pusher::Pusher<Vec,Mat>& pusher_;
 	Tree<Vec,Mat>& tree_;
 

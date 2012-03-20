@@ -5,7 +5,6 @@
 
 #include "Distribution.h"
 #include "SphericalDistribution.h"
-#include "../Configuration.h"
 #include <Eigen/Dense>
 #include <boost/random/uniform_real.hpp>
 
@@ -28,12 +27,10 @@ public:
 	 * @param height		Height of the cylinder.
 	 */
 	CylindricalDistribution(
-			const Configuration<Vec>& config,
 			const Eigen::Vector2d& bottom_centre,
 			double radius,
 			double height
 	):
-	config_(config),
 	bottom_centre_(bottom_centre),
 	radius_(radius), height_(height),
 	height_dist_(0, height){
@@ -60,7 +57,6 @@ public:
 	}
 private:
 	SphericalDistribution<RNG, Vec>* circ_dist_;
-	const Configuration<Vec>& config_;
 	const Eigen::Vector2d bottom_centre_;
 	double radius_, height_;
 	boost::uniform_real<double> height_dist_;

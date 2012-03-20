@@ -4,7 +4,6 @@
 #define CONSTDISTRIBUTION_H_
 
 #include "Distribution.h"
-#include "../Configuration.h"
 
 #include <Eigen/Dense>
 

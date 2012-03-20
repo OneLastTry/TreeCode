@@ -9,22 +9,20 @@
 #define PERIODICBOUNDARY_H_
 
 #include "BoundaryConditions.h"
-#include "../Configuration.h"
 
 namespace treecode {
 
 template <class Vec, class Mat>
-class ReflectiveBoundary : public BoundaryConditions<Vec> {
+class ReflectiveBoundary : public BoundaryConditions<Vec,Mat> {
 public:
 
 	/**
 	 * @brief Create a new set of periodic boundary conditions.
-	 * @param conf		Configuration.
 	 * @param origin	Origin of system.
 	 * @param length	Length of each side of the system.
 	 */
-	ReflectiveBoundary(const Configuration<Vec>& conf, const Vec origin, double length):
-		conf_(conf), origin_(origin), length_(length){}
+	ReflectiveBoundary(const Vec origin, double length):
+		origin_(origin), length_(length){}
 
 	/**
 	 * @brief Destructor (does nothing).
@@ -72,7 +70,6 @@ public:
 	}
 
 protected:
-	const Configuration<Vec>& conf_;
 	Vec origin_;
 	double length_;
 };

@@ -12,7 +12,6 @@
 #include <fstream>
 #include <Eigen/Dense>
 
-#include "Configuration.h"
 #include "bounds/BoundaryConditions.h"
 #include "Particle.h"
 #include "Node.h"
@@ -34,14 +33,13 @@ public:
 
 	/**
 	 * @brief Construct a Tree.
-	 * @param conf 		Configuration object.
 	 * @param bc		Boundary conditions the tree will obey.
 	 * @param parts		Vector of particles that the tree is constructed around.
 	 */
-	Tree(const Configuration<Vec>& conf, const BoundaryConditions<Vec, Mat>& bc, const std::vector<Particle<Vec,Mat>*>& parts):
-		configuration(conf), boundary(bc), particles(parts){
+	Tree(const BoundaryConditions<Vec, Mat>& bc, const std::vector<Particle<Vec,Mat>*>& parts):
+		boundary(bc), particles(parts){
 		//Create a root node using config and boundary conditions
-		root = new Node<Vec,Mat>(conf, bc.getOrigin(), bc.getSize());
+		root = new Node<Vec,Mat>(bc.getOrigin(), bc.getSize());
 		//Populate with particles, and gently inform the node it is root
 		root->setParticles(parts);
 		root->setStatus(Node<Vec,Mat>::ROOT);
@@ -138,7 +136,6 @@ public:
 	const Node<Vec,Mat>& getRoot() const{return *root; }
 
 private:
-	const Configuration<Vec>& configuration;
 	const BoundaryConditions<Vec,Mat>& boundary;
 	const std::vector<Particle<Vec,Mat>*>& particles;
 	Node<Vec,Mat>* root;

@@ -13,7 +13,6 @@
 
 #include "../Particle.h"
 #include "../Node.h"
-#include "../Configuration.h"
 #include "../potentials/Potential.h"
 #include "../bounds/BoundaryConditions.h"
 #include "../Tree.h"
@@ -33,12 +32,11 @@ public:
 
 	/**
 	 * @brief Construct a new LeapfrogPusher.
-	 * @param conf	Global configuration.
 	 * @param bc	Boundary conditions.
 	 * @param pot	Potential.
 	 */
-	LeapfrogPusher(const Configuration<Vec>& conf, const BoundaryConditions<Vec,Mat>& bc, const potentials::Potential<Vec,Mat>& pot):
-		configuration(conf), boundary(bc), potential(pot){}
+	LeapfrogPusher(double timestep, const BoundaryConditions<Vec,Mat>& bc, const potentials::Potential<Vec,Mat>& pot):
+		dt_(timestep), boundary(bc), potential(pot){}
 
 	/**
 	 * @brief Initialise leapfrog pusher.
@@ -67,7 +65,7 @@ public:
 			tree.getInteractionList(*p, ilist, mac);
 			for(typename interaction_list::iterator it = ilist.begin(); it < ilist.end(); it++){
 				Node* n = *it;
-				push_velocity(*p, *n, configuration.getTimestep()/2, precision);
+				push_velocity(*p, *n, dt_/2, precision);
 			}
 		}
 	}
@@ -95,7 +93,7 @@ public:
 		//Push position of each particle
 
 		BOOST_FOREACH(part_t* p, parts){
-			push_position(*p, configuration.getTimestep());
+			push_position(*p, dt_);
 			bc.particleMoved(p);
 		}
 
@@ -112,7 +110,7 @@ public:
 			double initial_vel = p->getVelocity().norm();
 			for(typename interaction_list::iterator it = ilist.begin(); it < ilist.end(); it++){
 				Node* n = *it;
-				push_velocity(*p, *n, configuration.getTimestep(), precision);
+				push_velocity(*p, *n, dt_, precision);
 				pe += 0.5 * p->getCharge() * potential.getPotential(*p, *n, precision);
 			}
 			double new_vel = p->getVelocity().norm();
@@ -150,7 +148,7 @@ private:
 		particle.updatePosition(particle.getVelocity() * dt);
 	}
 
-	const Configuration<Vec>& configuration;
+	double dt_;
 	const BoundaryConditions<Vec,Mat>& boundary;
 	const potentials::Potential<Vec,Mat>& potential;
 };

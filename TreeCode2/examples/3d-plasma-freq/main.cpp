@@ -33,18 +33,18 @@ namespace po = boost::program_options;
 
 
 
-Configuration3d parse_cmd_line(int argc, char **argv, double& length, unsigned int& num_parts, double& proportion, double& wavelengths, double& temperature){
+void parse_cmd_line(int argc, char **argv,
+		double& timestep, double &theta, double &max_time, double &fs,
+		double& length, unsigned int& num_parts, double& proportion, double& wavelengths, double& temperature){
 
 	OptionParser op(argc, argv);
 	bool help;
-	double timestep, theta, max_time, param, fs;
 
 	op << new ArgOption<double>("--length", "-l", "Length of system (in debye lengths)", length) <<
 			new ArgOption<double>("--timestep", "-dt", "Individual timestep.", timestep) <<
 			new ArgOption<double>("--softening", "-fs", "Force softening parameter.", fs) <<
 			new ArgOption<double>("--max-time", "-mt", "Maximum time to run to.", max_time) <<
 			new ArgOption<double>("--theta", "-t", "Critical opening angle.", theta) <<
-			new ArgOption<double>("--param", "-p", "Plasma parameter (larger implies more ideal)", param) <<
 			new ArgOption<unsigned int>("--number", "-n", "Number of each species.", num_parts) <<
 			new ArgOption<double>("--proportion", "-prop", "Proportion of particles in sinusoidal perturbation (0.0-1.0).", proportion) <<
 			new ArgOption<double>("--wavelengths", "-w", "Number of wavelengths in perturbation.", wavelengths) <<
@@ -56,9 +56,6 @@ Configuration3d parse_cmd_line(int argc, char **argv, double& length, unsigned i
 		op.display();
 		exit(0);
 	}
-
-	return Configuration3d(3, theta, timestep, max_time, param, fs);
-
 }
 
 int main(int argc, char **argv) {
@@ -71,10 +68,11 @@ int main(int argc, char **argv) {
 	mt19937 rng;
 
 
-	double length, wavelengths, proportion, temperature;
+	double length, wavelengths, proportion, temperature, timestep, theta, max_time, force_softening;
 	unsigned int num_particles;
 	std::string dbname;
-	Configuration3d c = parse_cmd_line(argc, argv, length, num_particles, proportion, wavelengths, temperature);
+	parse_cmd_line(argc, argv, timestep, theta, max_time, force_softening,
+			length, num_particles, proportion, wavelengths, temperature);
 
 	Vec origin(-length/2,-length/2,-length/2);
 	Vec max(length/2, length/2, length/2);
@@ -98,15 +96,15 @@ int main(int argc, char **argv) {
 	parts.insert(parts.end(), electrons.begin(), electrons.end());
 	parts.insert(parts.end(), perturbed_electrons.begin(), perturbed_electrons.end());
 
-	PeriodicBoundary3d		bounds(c, origin, length);
+	PeriodicBoundary3d		bounds(origin, length);
 	BarnesHutMAC<Vec,Mat>		mac(0.7, bounds);
-	CoulombForce3d 			open_pot(c, bounds);
-	EwaldForce3d			periodic_pot(c, bounds, 2.0 / length, 10, 10);
-	InterpolatedEwaldSum3d	potential(c, bounds, 25, periodic_pot, open_pot);
+	CoulombForce3d 			open_pot(force_softening, bounds);
+	EwaldForce3d			periodic_pot(force_softening, bounds, 2.0 / length, 10, 10);
+	InterpolatedEwaldSum3d	potential(force_softening, bounds, 25, periodic_pot, open_pot);
 	potential.init();
-	LeapfrogPusher3d 		push(c, bounds, potential);
-	Tree3d					tree(c, bounds, parts);
-	TimeIntegrator3d		integrator(c, parts, tree, bounds, push, mac);
+	LeapfrogPusher3d 		push(timestep, bounds, potential);
+	Tree3d					tree(bounds, parts);
+	TimeIntegrator3d		integrator(timestep, max_time, parts, tree, bounds, push, mac);
 	integrator.setEnergyOutputFile("energies.csv");
 	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("positions.csv", parts, ParticleTracker<Vec,Mat>::POSITION));
 	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("velocities.csv", parts, ParticleTracker<Vec,Mat>::VELOCITY));

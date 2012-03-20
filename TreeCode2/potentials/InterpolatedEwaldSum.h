@@ -16,7 +16,6 @@
 #include "../bounds/BoundaryConditions.h"
 #include "../Node.h"
 #include "../Particle.h"
-#include "../Configuration.h"
 #include <cmath>
 
 #define SQRT_PI 1.7724538509055159
@@ -63,12 +62,13 @@ class InterpolatedEwaldSum : public Potential<Vec, Mat>{
 
 public:
 	InterpolatedEwaldSum(
-			const Configuration<Vec>& conf,
+			double force_softening,
 			const BoundaryConditions<Vec,Mat>& bounds,
 			unsigned int divisions,
 			const EwaldForce<Vec, Mat>& ewald_pot,
 			const CoulombForceThreeD<Vec, Mat>& coulomb_pot) :
-			conf_(conf), bounds_(bounds), divisions_(divisions),
+			fs_(force_softening),
+			bounds_(bounds), divisions_(divisions),
 			ewald_pot_(ewald_pot), coulomb_pot_(coulomb_pot){
 
 		length_per_div_ = bounds.getSize() / divisions;
@@ -124,8 +124,6 @@ public:
 
 		//Apply self-energy correction
 		potential -= 2 * ewald_pot_.alpha_ / SQRT_PI * node.getCharge();
-		//Apply scaling from unit system
-		potential /= (3 * conf_.getDensity());
 		//Add contribution from main cell
 		potential += coulomb_pot_.getPotential(part, node, precision);
 		return potential;
@@ -142,7 +140,7 @@ public:
 		force += interpolated.t2 * node.getDipoleMoments();
 
 		//Apply charge and scaling from unit system
-		force = part.getCharge() * force / (3 * conf_.getDensity());
+		force = part.getCharge() * force;
 		//Add direct contribution
 		force += coulomb_pot_.getForce(part, node, precision);
 		return force;
@@ -206,7 +204,7 @@ public:
 
 	//				if(i >= -1 && i <= 1 && j >= -1 && j <= 1 && k >= -1 && k <= 1)
 					if(i == 0 && j == 0 && k == 0)
-						r_n_norm = sqrt(r_n_norm*r_n_norm + conf_.getForceSoftening()*conf_.getForceSoftening());
+						r_n_norm = sqrt(r_n_norm*r_n_norm + fs_*fs_);
 
 					//Then actually add contributions.
 					node.t0 += ewald_pot_.a0_real(r_n, r_n_norm);
@@ -233,7 +231,7 @@ public:
 		}
 
 		//Now, remove the contribution from the main cell
-		double r = 1.0 / sqrt(disp_vec.squaredNorm() + conf_.getForceSoftening()*conf_.getForceSoftening());
+		double r = 1.0 / sqrt(disp_vec.squaredNorm() + fs_*fs_);
 		double r_3 = r * r * r;
 		double r_5 = r_3 * r * r;
 		node.t0 -= r;
@@ -247,9 +245,9 @@ public:
 	}
 
 private:
+	double fs_;
 	multi_arr* field_;
 
-	const Configuration<Vec>& conf_;
 	const BoundaryConditions<Vec,Mat>& bounds_;
 	unsigned int divisions_;
 	double length_per_div_;

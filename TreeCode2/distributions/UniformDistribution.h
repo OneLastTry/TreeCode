@@ -7,7 +7,6 @@
 #include <boost/random/uniform_01.hpp>
 
 #include "Distribution.h"
-#include "../Configuration.h"
 
 namespace treecode {
 namespace distribution {

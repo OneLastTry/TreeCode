@@ -111,13 +111,12 @@ void printTimings(){
 		parts.insert(parts.end(), ions.begin(), ions.end());
 		parts.insert(parts.end(), electrons.begin(), electrons.end());
 
-		Configuration3d c(3, 0.99, 0.01, 0.01, 0.3333333333333, 0.0);
-		OpenBoundary3d bounds(c);
+		OpenBoundary3d bounds;
 		bounds.init(parts);
-		CoulombForce3d potential(c, bounds);
-		LeapfrogPusher3d push(c, bounds, potential);
-		BarnesHutMAC<Vec, Mat> mac(c.getTheta(), bounds);
-		Tree3d tree(c, bounds, parts);
+		CoulombForce3d potential(0.0, bounds);
+		LeapfrogPusher3d push(0.01, bounds, potential);
+		BarnesHutMAC<Vec, Mat> mac(0.0, bounds);
+		Tree3d tree(bounds, parts);
 		tree.rebuild();
 
 
@@ -143,7 +142,7 @@ void printTimings(){
 
 }
 
-void printErrors(unsigned int n_test, Configuration3d& conf, vector<Particle3d*>& parts, const Tree3d& tree, const Potential<Vec,Mat>& potential, BarnesHutMAC<Vec, Mat>& mac){
+void printErrors(unsigned int n_test, vector<Particle3d*>& parts, const Tree3d& tree, const Potential<Vec,Mat>& potential, BarnesHutMAC<Vec, Mat>& mac){
 	//Generate the list of particles to look at
 	boost::mt19937 rng;
 	boost::uniform_01<double> dist;
@@ -161,16 +160,14 @@ void printErrors(unsigned int n_test, Configuration3d& conf, vector<Particle3d*>
 	clock_t start_time, end_time;
 
 	//Generate the direct force sum
-	conf.setTheta(0.0);
 	start_time = clock();
 	vector<Vec> direct_forces = getForces(parts, particle_indices, tree, potential, Precision::monopole, mac);
 	end_time = clock();
 	//Output data for start.
-	cout << conf.getTheta() << "\t" << 0.0 << "\t" << 0.0 << "\t" << 0.0 << "\t";
+	cout << 0.0 << "\t" << 0.0 << "\t" << 0.0 << "\t" << 0.0 << "\t";
 	cout << (end_time-start_time) << "\t" << (end_time-start_time) << "\t" << (end_time-start_time) << "\t" << endl;
 
 	for(double theta = 0.01; theta < 2.0; theta *= 1.01){
-		conf.setTheta(theta);
 		mac.setTheta(theta);
 
 		start_time = clock();
@@ -188,7 +185,7 @@ void printErrors(unsigned int n_test, Configuration3d& conf, vector<Particle3d*>
 		double quadrupole_error = getForceError(direct_forces, approx_forces);
 		clock_t quadrupole_time = clock() - start_time;
 
-		cout << conf.getTheta() << "\t" << monopole_error << "\t" << dipole_error << "\t" << quadrupole_error << "\t";
+		cout << theta << "\t" << monopole_error << "\t" << dipole_error << "\t" << quadrupole_error << "\t";
 		cout << monopole_time << "\t" << dipole_time << "\t" << quadrupole_time << endl;
 	}
 }
@@ -204,6 +201,8 @@ int main(int argc, char **argv) {
 
 	double length = 10;
 	unsigned int num_particles = 1000;
+	double force_softening = 0.0;
+	double timestep = 0.01;
 
 	Vec origin(-length / 2, -length / 2, -length / 2);
 	Vec max(length / 2, length / 2, length / 2);
@@ -222,16 +221,15 @@ int main(int argc, char **argv) {
 	parts.insert(parts.end(), ions.begin(), ions.end());
 	parts.insert(parts.end(), electrons.begin(), electrons.end());
 
-	Configuration3d c(3, 0.0, 0.01, 0.01, 0.3333333333333, 0.0);
-	OpenBoundary3d bounds(c);
+	OpenBoundary3d bounds;
 	bounds.init(parts);
-	CoulombForce3d potential(c, bounds);
-	LeapfrogPusher3d push(c, bounds, potential);
-	BarnesHutMAC<Vec,Mat> mac(c.getTheta(), bounds);
-	Tree3d tree(c, bounds, parts);
+	CoulombForce3d potential(force_softening, bounds);
+	LeapfrogPusher3d push(timestep, bounds, potential);
+	BarnesHutMAC<Vec,Mat> mac(0.0, bounds);
+	Tree3d tree(bounds, parts);
 	tree.rebuild();
 
-	printErrors(100, c, parts, tree, potential, mac);
+	printErrors(100, parts, tree, potential, mac);
 	printTimings();
 	return 0;
 }

@@ -14,7 +14,6 @@
 #include <Eigen/Dense>
 #include <boost/foreach.hpp>
 #include "../Particle.h"
-#include "../Configuration.h"
 
 namespace treecode {
 
@@ -33,10 +32,8 @@ public:
 
 	/**
 	 * @brief Construct a new boundary system.
-	 * @param conf	Configuration.
 	 */
-	OpenBoundary(const Configuration<Vec>& conf) :
-			configuration(conf){}
+	OpenBoundary(){}
 
 	/**
 	 * @brief Initialise with list of particles.
@@ -119,7 +116,6 @@ public:
 
 private:
 
-	const Configuration<Vec>& configuration;
 	Vec minimum, maximum;
 	short flag;	//Needs updating if non-zero
 };

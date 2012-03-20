@@ -30,11 +30,12 @@
 using namespace std;
 using namespace treecode;
 
-Configuration3d parse_cmd_line(int argc, char **argv, double& length, unsigned int& num_parts, double& temperature){
+void parse_cmd_line(int argc, char **argv,
+		double &theta, double &fs, double &dt, double &max_time,
+		double& length, unsigned int& num_parts, double& temperature){
 	// Declare the supported options.
 	OptionParser op(argc, argv);
 	bool help;
-	double fs, dt, max_time, theta, param;
 	op <<
 	    new BoolOption("--help" ,"-h", "Produce this message", help) <<
 	    new ArgOption<double>("--length", 			"-l", 	"Length of one side of bounding box.", length) <<
@@ -42,7 +43,6 @@ Configuration3d parse_cmd_line(int argc, char **argv, double& length, unsigned i
 	    new ArgOption<double>("--timestep", 		"-d",	"Timestep", dt) <<
 	    new ArgOption<double>("--max-time", 		"-m", 	"Maximum time", max_time) <<
 	    new ArgOption<double>("--theta", 			"-t", 	"Theta (MAC)", theta) <<
-	    new ArgOption<double>("--param", 			"-p", 	"Plasma parameter (bigger implies more ideal)", param) <<
 	    new ArgOption<unsigned int>("--number", 	"-n", 	"Number of each species", num_parts) <<
 	    new ArgOption<double>("--temperature", 		"-T", 	"Temperature of plasma", temperature);
 
@@ -52,8 +52,6 @@ Configuration3d parse_cmd_line(int argc, char **argv, double& length, unsigned i
 		op.display(std::cout);
 		exit(0);
 	}
-
-	return Configuration3d(3, theta, dt, max_time, param, fs);
 }
 
 int main(int argc, char **argv) {
@@ -66,9 +64,12 @@ int main(int argc, char **argv) {
 	using boost::random::mt19937;
 	mt19937 rng;
 
-	double length, temperature;
+	double theta, force_softening, timestep, max_time, length, temperature;
 	unsigned int num_particles;
-	Configuration3d c = parse_cmd_line(argc, argv, length, num_particles, temperature);
+	parse_cmd_line(argc, argv,
+			theta, force_softening, timestep, max_time,
+			length, num_particles, temperature);
+
 
 	UniformDistribution3d 			position_dist(Vec(0,0,0), Vec(length, length, length));
 	ConstDistribution3d				i_velocity_dist(Vec::Zero());
@@ -89,16 +90,16 @@ int main(int argc, char **argv) {
 	std::ofstream fout("count.csv");
 	bool min_reset[] = {true, false, false};
 	bool max_reset[] = {false, false, false};
-	CullingBoundary<Vec,Mat,mt19937> bounds(c, Vec(0,0,0), length, e_velocity_dist, min_reset, max_reset, rng);
+	CullingBoundary<Vec,Mat,mt19937> bounds(Vec(0,0,0), length, e_velocity_dist, min_reset, max_reset, rng);
 
-	CoulombForceEField<Vec, Mat> open_pot(c, bounds, Vec(100, 0, 0));
-	EwaldForce3d			periodic_pot(c, bounds, 2.0 / length, 5, 5);
-	InterpolatedEwaldSum3d	potential(c, bounds, 20, periodic_pot, open_pot);
+	CoulombForceEField<Vec, Mat> open_pot(force_softening, bounds, Vec(100, 0, 0));
+	EwaldForce3d			periodic_pot(force_softening, bounds, 2.0 / length, 5, 5);
+	InterpolatedEwaldSum3d	potential(force_softening, bounds, 20, periodic_pot, open_pot);
 	potential.init();
-	BarnesHutMAC<Vec,Mat>	mac(c.getTheta(), bounds);
-	LeapfrogPusher3d 		push(c, bounds, potential);
-	Tree3d					tree(c, bounds, parts);
-	TimeIntegrator3d		integrator(c, parts, tree, bounds, push, mac);
+	BarnesHutMAC<Vec,Mat>	mac(theta, bounds);
+	LeapfrogPusher3d 		push(timestep, bounds, potential);
+	Tree3d					tree(bounds, parts);
+	TimeIntegrator3d		integrator(timestep, max_time, parts, tree, bounds, push, mac);
 
 	integrator.setEnergyOutputFile("energies.csv");
 	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("velocities.csv", electrons, ParticleTracker<Vec,Mat>::VELOCITY));

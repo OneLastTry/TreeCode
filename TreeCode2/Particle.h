@@ -6,7 +6,6 @@
 
 #include <iostream>
 
-#include "Configuration.h"
 #include "distributions/ChargeDistribution.h"
 #include "distributions/Distribution.h"
 
