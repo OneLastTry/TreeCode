@@ -23,7 +23,7 @@
 #include <distributions/MaxwellDistribution.h>
 #include <distributions/ConstantChargeDistribution.h>
 
-#include <output/ParticleTracker.h>
+#include <output/CoordTracker.h>
 
 #include <bounds/PeriodicBoundary.h>
 #include <bounds/CountingPeriodicBounds.h>
@@ -121,8 +121,8 @@ int main(int argc, char **argv) {
 	integrator.setEnergyOutputFile("energies.csv");
 
 
-	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("positions.csv", parts, ParticleTracker<Vec,Mat>::POSITION));
-	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("velocities.csv", parts, ParticleTracker<Vec,Mat>::VELOCITY));
+	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("positions.csv", parts, CoordTracker<Vec,Mat>::POSITION));
+	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("velocities.csv", parts, CoordTracker<Vec,Mat>::VELOCITY));
 
 
 	integrator.start(quadrupole, 1);

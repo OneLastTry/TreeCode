@@ -167,7 +167,7 @@ void printErrors(unsigned int n_test, vector<Particle3d*>& parts, const Tree3d& 
 	cout << 0.0 << "\t" << 0.0 << "\t" << 0.0 << "\t" << 0.0 << "\t";
 	cout << (end_time-start_time) << "\t" << (end_time-start_time) << "\t" << (end_time-start_time) << "\t" << endl;
 
-	for(double theta = 0.01; theta < 2.0; theta *= 1.01){
+	for(double theta = 0.01; theta < 2.0; theta += 0.01){
 		mac.setTheta(theta);
 
 		start_time = clock();
@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
 	Tree3d tree(bounds, parts);
 	tree.rebuild();
 
-	printErrors(100, parts, tree, potential, mac);
+	printErrors(1000, parts, tree, potential, mac);
 	printTimings();
 	return 0;
 }

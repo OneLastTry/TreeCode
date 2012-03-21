@@ -20,13 +20,9 @@ namespace output{
 template <class Vec, class Mat>
 class ParticleTracker{
 public:
-	enum token {
-		POSITION,
-		VELOCITY
-	};
 
-	ParticleTracker(std::string filename, const std::vector<Particle<Vec,Mat>*>& parts, token record):
-		parts_(parts), record_(record){
+	ParticleTracker(std::string filename, const std::vector<Particle<Vec,Mat>*>& parts):
+		parts_(parts){
 		if(filename.compare("stdout") == 0)
 			out_ = &std::cout;
 		else if(filename.compare("stderr") == 0)
@@ -41,23 +37,10 @@ public:
 	}
 
 
-	virtual void output(){
-		typedef Particle<Vec,Mat> part_t;
-		BOOST_FOREACH(part_t* p, parts_){
-			if(record_ == POSITION){
-				for(unsigned int i = 0; i < p->getPosition().rows();i++)
-					(*out_) << p->getPosition()[i] << "\t";
-			}else if(record_ == VELOCITY){
-				for(unsigned int i = 0; i < p->getVelocity().rows();i++)
-					(*out_) << p->getVelocity()[i] << "\t";
-			}
-		}
-		(*out_) << std::endl;
-	}
+	virtual void output() = 0;
 protected:
 	std::ostream* out_;
 	const std::vector<Particle<Vec,Mat>* >& parts_;
-	token record_;
 };
 
 }//output namespace

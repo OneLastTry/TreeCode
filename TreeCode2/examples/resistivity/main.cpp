@@ -17,6 +17,7 @@
 #include <potentials/CoulombForceEField.h>
 #include <macs/BarnesHutMAC.h>
 
+#include <output/CoordTracker.h>
 #include <Configuration.h>
 #include <Particle.h>
 #include <Node.h>
@@ -102,7 +103,7 @@ int main(int argc, char **argv) {
 	TimeIntegrator3d		integrator(timestep, max_time, parts, tree, bounds, push, mac);
 
 	integrator.setEnergyOutputFile("energies.csv");
-	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("velocities.csv", electrons, ParticleTracker<Vec,Mat>::VELOCITY));
+	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("velocities.csv", electrons, CoordTracker<Vec,Mat>::VELOCITY));
 
 	push.init(parts, tree, quadrupole, mac);
 

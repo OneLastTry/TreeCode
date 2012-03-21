@@ -20,7 +20,7 @@
 #include <Tree.h>
 #include <TimeIntegrator.h>
 #include <macs/BarnesHutMAC.h>
-#include <output/ParticleTracker.h>
+#include <output/CoordTracker.h>
 
 #include <Eigen/Dense>
 #include <vector>
@@ -113,8 +113,8 @@ void periodic_start(double length, double wavelengths, double proportion,
 	Tree3d					tree(bounds, parts);
 	TimeIntegrator3d		integrator(timestep, max_time, parts, tree, bounds, push, mac);
 	integrator.setEnergyOutputFile("energies.csv");
-	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("positions.csv", parts, ParticleTracker<Vec,Mat>::POSITION));
-	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("velocities.csv", parts, ParticleTracker<Vec,Mat>::VELOCITY));
+	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("positions.csv", parts, CoordTracker<Vec,Mat>::POSITION));
+	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("velocities.csv", parts, CoordTracker<Vec,Mat>::VELOCITY));
 
 	cout << "Initialising pusher" << endl;
 
@@ -164,8 +164,8 @@ void open_start(double length, double wavelengths, double proportion,
 	Tree3d					tree(bounds, parts);
 	TimeIntegrator3d		integrator(timestep, max_time, parts, tree, bounds, push, mac);
 	integrator.setEnergyOutputFile("energies.csv");
-	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("positions.csv", parts, ParticleTracker<Vec,Mat>::POSITION));
-	integrator.addParticleTracker(new ParticleTracker<Vec,Mat>("velocities.csv", parts, ParticleTracker<Vec,Mat>::VELOCITY));
+	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("positions.csv", parts, CoordTracker<Vec,Mat>::POSITION));
+	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("velocities.csv", parts, CoordTracker<Vec,Mat>::VELOCITY));
 
 	cout << "Initialising pusher" << endl;
 
