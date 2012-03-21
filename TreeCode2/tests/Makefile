@@ -9,7 +9,7 @@ CC = gfilt
 NAME = tests 
 
 test:
-	$(CC) $(LDFLAGS) $(CFLAGS) $(OPTFLAGS) TreeTest.cpp -o $(NAME)
+	$(CC) $(LDFLAGS) $(CFLAGS) TreeTest.cpp -o $(NAME)
 	
 clean:
 	rm -f $(NAME)
