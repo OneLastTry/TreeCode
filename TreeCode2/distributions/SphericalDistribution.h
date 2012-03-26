@@ -4,7 +4,7 @@
 #define SPHERICALDISTRIBUTION_H_
 
 #include "Distribution.h"
-#include <boost/random/uniform_real.hpp>
+#include <boost/random/uniform_real_distribution.hpp>
 #include <Eigen/Dense>
 
 #include <iostream>
@@ -60,7 +60,7 @@ private:
 	unsigned int dims_;
 	Vec centre_;
 	double radius_;
-	boost::uniform_real<double> dist_;
+	boost::random::uniform_real_distribution<double> dist_;
 };
 
 } /* namespace distribution */
