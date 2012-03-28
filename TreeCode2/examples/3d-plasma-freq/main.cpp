@@ -11,16 +11,28 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/foreach.hpp>
 
-#include <3d_typedefs.h>
-
 #include <opt_parser/OptionParser.h>
-#include <Configuration.h>
 #include <Particle.h>
 #include <Node.h>
 #include <Tree.h>
 #include <TimeIntegrator.h>
 #include <macs/BarnesHutMAC.h>
 #include <output/CoordTracker.h>
+
+#include <bounds/PeriodicBoundary.h>
+#include <bounds/OpenBoundary.h>
+
+#include <potentials/CoulombForce.h>
+#include <potentials/EwaldForce.h>
+#include <potentials/InterpolatedEwaldSum.h>
+#include <pushers/LeapfrogPusher.h>
+
+#include <distributions/UniformDistribution.h>
+#include <distributions/MaxwellDistribution.h>
+#include <distributions/SinusoidalDistribution.h>
+#include <distributions/ConstDistribution.h>
+#include <distributions/ConstantChargeDistribution.h>
+#include <distributions/SphericalDistribution.h>
 
 #include <Eigen/Dense>
 #include <vector>
@@ -31,7 +43,7 @@ using namespace treecode;
 
 namespace po = boost::program_options;
 
-
+typedef Eigen::Matrix<double, 3, 1> Vec;
 
 void parse_cmd_line(int argc, char **argv,
 		double& timestep, double &theta, double &max_time, double &fs,
@@ -83,38 +95,38 @@ void periodic_start(double length, double wavelengths, double proportion,
 
 	Vec origin(-length/2,-length/2,-length/2);
 	Vec max(length/2, length/2, length/2);
-	UniformDistribution3d 			position_dist(origin, max);
-	SinusoidalDistribution3d		perturbed_dist(0, origin, max, wavelengths, M_PI_2);
-	ConstDistribution3d				i_velocity_dist(Vec::Zero());
-	MaxwellDistribution3d			e_velocity_dist(1, temperature);
-	ConstantChargeDistribution3d	electron_charges(-1);
-	ConstantChargeDistribution3d	ion_charges(1);
+	UniformDistribution<mt19937, 3> 			position_dist(origin, max);
+	SinusoidalDistribution<mt19937, 3>		perturbed_dist(0, origin, max, wavelengths, M_PI_2);
+	ConstDistribution<mt19937, 3>				i_velocity_dist(Vec::Zero());
+	MaxwellDistribution<mt19937, 3>			e_velocity_dist(1, temperature);
+	ConstantChargeDistribution<mt19937>	electron_charges(-1);
+	ConstantChargeDistribution<mt19937>	ion_charges(1);
 
 	int id = 0;
-	vector<Particle3d*> parts;
-	vector<Particle3d*> ions = Particle3d::generateParticles<mt19937>(num_particles, 100000, rng,
+	vector<Particle<3>*> parts;
+	vector<Particle<3>*> ions = Particle<3>::generateParticles<mt19937>(num_particles, 100000, rng,
 			position_dist, i_velocity_dist, ion_charges, id);
-	vector<Particle3d*> electrons = Particle3d::generateParticles<mt19937>(num_particles * (1 - proportion), 1, rng,
+	vector<Particle<3>*> electrons = Particle<3>::generateParticles<mt19937>(num_particles * (1 - proportion), 1, rng,
 				position_dist, e_velocity_dist, electron_charges, id);
-	vector<Particle3d*> perturbed_electrons = Particle3d::generateParticles<mt19937>(num_particles*proportion, 1, rng,
+	vector<Particle<3>*> perturbed_electrons = Particle<3>::generateParticles<mt19937>(num_particles*proportion, 1, rng,
 					perturbed_dist, e_velocity_dist, electron_charges, id);
 
 	parts.insert(parts.end(), ions.begin(), ions.end());
 	parts.insert(parts.end(), electrons.begin(), electrons.end());
 	parts.insert(parts.end(), perturbed_electrons.begin(), perturbed_electrons.end());
 
-	PeriodicBoundary3d		bounds(origin, length);
-	BarnesHutMAC<Vec,Mat>		mac(theta, bounds);
-	CoulombForce3d 			open_pot(force_softening, bounds);
-	EwaldForce3d			periodic_pot(force_softening, bounds, 2.0 / length, 5, 5);
-	InterpolatedEwaldSum3d	potential(force_softening, bounds, 20, periodic_pot, open_pot);
+	PeriodicBoundary<3>		bounds(origin, length);
+	BarnesHutMAC<3>		mac(theta, bounds);
+	CoulombForceThreeD<3> 			open_pot(force_softening, bounds);
+	EwaldForce<3>			periodic_pot(force_softening, bounds, 2.0 / length, 5, 5);
+	InterpolatedEwaldSum<3>	potential(force_softening, bounds, 20, periodic_pot, open_pot);
 	potential.init();
-	LeapfrogPusher3d 		push(timestep, bounds, potential);
-	Tree3d					tree(bounds, parts);
-	TimeIntegrator3d		integrator(timestep, max_time, parts, tree, bounds, push, mac);
+	LeapfrogPusher<3> 		push(timestep, bounds, potential);
+	Tree<3>					tree(bounds, parts);
+	TimeIntegrator<3>		integrator(timestep, max_time, parts, tree, bounds, push, mac);
 	integrator.setEnergyOutputFile("energies.csv");
-	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("positions.csv", parts, CoordTracker<Vec,Mat>::POSITION));
-	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("velocities.csv", parts, CoordTracker<Vec,Mat>::VELOCITY));
+	integrator.addParticleTracker(new CoordTracker<3>("positions.csv", parts, CoordTracker<3>::POSITION));
+	integrator.addParticleTracker(new CoordTracker<3>("velocities.csv", parts, CoordTracker<3>::VELOCITY));
 
 	cout << "Initialising pusher" << endl;
 
@@ -136,36 +148,36 @@ void open_start(double length, double wavelengths, double proportion,
 
 
 	Vec origin = Vec::Zero();
-	SphericalDistribution3d			position_dist(3, origin, length);
-	SphericalDistribution3d			perturbed_dist(3, origin, length/20);
-	ConstDistribution3d				i_velocity_dist(Vec::Zero());
-	MaxwellDistribution3d			e_velocity_dist(1, temperature);
-	ConstantChargeDistribution3d	electron_charges(-1);
-	ConstantChargeDistribution3d	ion_charges(1);
+	SphericalDistribution<mt19937, 3>			position_dist(3, origin, length);
+	SphericalDistribution<mt19937, 3>			perturbed_dist(3, origin, length/20);
+	ConstDistribution<mt19937, 3>				i_velocity_dist(Vec::Zero());
+	MaxwellDistribution<mt19937, 3>			e_velocity_dist(1, temperature);
+	ConstantChargeDistribution<mt19937>	electron_charges(-1);
+	ConstantChargeDistribution<mt19937>	ion_charges(1);
 
 	int id = 0;
-	vector<Particle3d*> parts;
-	vector<Particle3d*> ions = Particle3d::generateParticles<mt19937>(num_particles, 100000, rng,
+	vector<Particle<3>*> parts;
+	vector<Particle<3>*> ions = Particle<3>::generateParticles<mt19937>(num_particles, 100000, rng,
 			position_dist, i_velocity_dist, ion_charges, id);
-	vector<Particle3d*> electrons = Particle3d::generateParticles<mt19937>(num_particles * (1 - proportion), 1, rng,
+	vector<Particle<3>*> electrons = Particle<3>::generateParticles<mt19937>(num_particles * (1 - proportion), 1, rng,
 				position_dist, e_velocity_dist, electron_charges, id);
-	vector<Particle3d*> perturbed_electrons = Particle3d::generateParticles<mt19937>(num_particles*proportion, 1, rng,
+	vector<Particle<3>*> perturbed_electrons = Particle<3>::generateParticles<mt19937>(num_particles*proportion, 1, rng,
 					perturbed_dist, e_velocity_dist, electron_charges, id);
 
 	parts.insert(parts.end(), ions.begin(), ions.end());
 	parts.insert(parts.end(), electrons.begin(), electrons.end());
 	parts.insert(parts.end(), perturbed_electrons.begin(), perturbed_electrons.end());
 
-	OpenBoundary3d			bounds;
+	OpenBoundary<3>			bounds;
 	bounds.init(parts);
-	BarnesHutMAC<Vec,Mat>	mac(theta, bounds);
-	CoulombForce3d 			potential(force_softening, bounds);
-	LeapfrogPusher3d 		push(timestep, bounds, potential);
-	Tree3d					tree(bounds, parts);
-	TimeIntegrator3d		integrator(timestep, max_time, parts, tree, bounds, push, mac);
+	BarnesHutMAC<3>	mac(theta, bounds);
+	CoulombForceThreeD<3> 			potential(force_softening, bounds);
+	LeapfrogPusher<3> 		push(timestep, bounds, potential);
+	Tree<3>					tree(bounds, parts);
+	TimeIntegrator<3>		integrator(timestep, max_time, parts, tree, bounds, push, mac);
 	integrator.setEnergyOutputFile("energies.csv");
-	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("positions.csv", parts, CoordTracker<Vec,Mat>::POSITION));
-	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("velocities.csv", parts, CoordTracker<Vec,Mat>::VELOCITY));
+	integrator.addParticleTracker(new CoordTracker<3>("positions.csv", parts, CoordTracker<3>::POSITION));
+	integrator.addParticleTracker(new CoordTracker<3>("velocities.csv", parts, CoordTracker<3>::VELOCITY));
 
 	cout << "Initialising pusher" << endl;
 

@@ -25,8 +25,10 @@ enum Precision {
  * @class Potential "potentials/Potential.h"
  */
 
-template <class Vec, class Mat>
+template <int D>
 class Potential {
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
 public:
 
 	/**
@@ -36,7 +38,7 @@ public:
 	 * @param precision		Level of precision used (monopole, dipole, quadrupole)
 	 * @return	Force on particle.
 	 */
-	virtual Vec getForce(const Particle<Vec,Mat>& part, const Node<Vec, Mat>& node, Precision precision) const = 0;
+	virtual Vec getForce(const Particle<D>& part, const Node<D>& node, Precision precision) const = 0;
 	/**
 	 * @brief Pure virtual method that must return the electric potential at particle's position.
 	 * @param part			Particle to calculate the potential at.
@@ -44,7 +46,7 @@ public:
 	 * @param precision		Level of precision.
 	 * @return	Electric potential at part's location.
 	 */
-	virtual double getPotential(const Particle<Vec,Mat>& part, const Node<Vec, Mat>& node, Precision precision) const = 0;
+	virtual double getPotential(const Particle<D>& part, const Node<D>& node, Precision precision) const = 0;
 };
 
 } /* namespace potentials */

@@ -91,19 +91,19 @@ int main(int argc, char **argv) {
 	std::ofstream fout("count.csv");
 	bool min_reset[] = {true, false, false};
 	bool max_reset[] = {false, false, false};
-	CullingBoundary<Vec,Mat,mt19937> bounds(Vec(0,0,0), length, e_velocity_dist, min_reset, max_reset, rng);
+	CullingBoundary<D,mt19937> bounds(Vec(0,0,0), length, e_velocity_dist, min_reset, max_reset, rng);
 
-	CoulombForceEField<Vec, Mat> open_pot(force_softening, bounds, Vec(100, 0, 0));
+	CoulombForceEField<D> open_pot(force_softening, bounds, Vec(100, 0, 0));
 	EwaldForce3d			periodic_pot(force_softening, bounds, 2.0 / length, 5, 5);
 	InterpolatedEwaldSum3d	potential(force_softening, bounds, 20, periodic_pot, open_pot);
 	potential.init();
-	BarnesHutMAC<Vec,Mat>	mac(theta, bounds);
+	BarnesHutMAC<D>	mac(theta, bounds);
 	LeapfrogPusher3d 		push(timestep, bounds, potential);
 	Tree3d					tree(bounds, parts);
 	TimeIntegrator3d		integrator(timestep, max_time, parts, tree, bounds, push, mac);
 
 	integrator.setEnergyOutputFile("energies.csv");
-	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("velocities.csv", electrons, CoordTracker<Vec,Mat>::VELOCITY));
+	integrator.addParticleTracker(new CoordTracker<D>("velocities.csv", electrons, CoordTracker<D>::VELOCITY));
 
 	push.init(parts, tree, quadrupole, mac);
 

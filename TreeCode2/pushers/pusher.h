@@ -15,8 +15,11 @@ namespace treecode {
 
 namespace pusher{
 
-template <class Vec, class Mat>
+template <int D>
 class Pusher{
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 	/**
 	 * @class Pusher
 	 * @brief Abstract base class for particle pushers.
@@ -33,11 +36,11 @@ public:
 	 * @return std::pair<ke,pe> containg kinetic energy and potential energy
 	 */
 	virtual std::pair<double, double> push_particles(
-			std::vector<Particle<Vec,Mat>*> parts,
-			Tree<Vec,Mat>& tree,
-			BoundaryConditions<Vec,Mat>& bc,
+			std::vector<Particle<D>*> parts,
+			Tree<D>& tree,
+			BoundaryConditions<D>& bc,
 			potentials::Precision prec,
-			const AcceptanceCriterion<Vec, Mat>& mac) = 0;
+			const AcceptanceCriterion<D>& mac) = 0;
 
 };
 

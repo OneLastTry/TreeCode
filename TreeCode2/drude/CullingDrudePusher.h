@@ -18,33 +18,36 @@
 namespace treecode{
 namespace pusher{
 
-template<class Vec, class Mat, class RNG>
-class CullingDrudePusher : public DrudePusher<Vec, Mat>{
+template<int D, class RNG>
+class CullingDrudePusher : public DrudePusher<D>{
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	CullingDrudePusher(const Configuration<Vec>& config,
-			BoundaryConditions<Vec,Mat>& bounds,
-			const distribution::VectorDistribution<RNG, Vec>& vel_dist,
-			DrudeMAC<Vec,Mat>& mac,
+			BoundaryConditions<D>& bounds,
+			const distribution::VectorDistribution<RNG, D>& vel_dist,
+			DrudeMAC<D>& mac,
 			RNG& rng):
-				DrudePusher<Vec, Mat>(config, bounds, mac),
+				DrudePusher<D>(config, bounds, mac),
 				vel_dist_(vel_dist), rng_(rng){}
 
-	std::pair<double, double> push_particles(std::vector<Particle<Vec,Mat>*> parts, Tree<Vec,Mat>& tree, BoundaryConditions<Vec,Mat>& bc,
-			potentials::Precision prec, const AcceptanceCriterion<Vec, Mat>& mac){
+	std::pair<double, double> push_particles(std::vector<Particle<D>*> parts, Tree<D>& tree, BoundaryConditions<D>& bc,
+			potentials::Precision prec, const AcceptanceCriterion<D>& mac){
 
 		//If next particle step would take it across the entire system, reset velocity vector
-		typedef Particle<Vec,Mat> part_t;
+		typedef Particle<D> part_t;
 		BOOST_FOREACH(part_t* p, parts){
-			if(p->getVelocity().norm() * DrudePusher<Vec,Mat>::config_.getTimestep() > DrudePusher<Vec,Mat>::bounds_.getSize()){
+			if(p->getVelocity().norm() * DrudePusher<D>::config_.getTimestep() > DrudePusher<D>::bounds_.getSize()){
 				p->setVelocity(vel_dist_.getVector(rng_));
 				std::cout << "Culling particle" << std::endl;
 			}
 		}
 
-		return DrudePusher<Vec, Mat>::push_particles(parts, tree, bc, prec, mac);
+		return DrudePusher<D>::push_particles(parts, tree, bc, prec, mac);
 	}
 protected:
-	const distribution::VectorDistribution<RNG, Vec>& vel_dist_;
+	const distribution::VectorDistribution<RNG, D>& vel_dist_;
 	RNG& rng_;
 };
 

@@ -12,8 +12,11 @@
 
 namespace treecode {
 
-template <class Vec, class Mat>
-class PeriodicBoundary : public BoundaryConditions<Vec,Mat> {
+template <int D>
+class PeriodicBoundary : public BoundaryConditions<D> {
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	/**
 	 * @class PeriodicBoundary "bounds/PeriodicBoundary.h"
@@ -44,7 +47,7 @@ public:
 	 *
 	 * @param p	Particle to move.
 	 */
-	virtual void particleMoved(treecode::Particle<Vec,Mat>* p){
+	virtual void particleMoved(treecode::Particle<D>* p){
 		Vec translation_vector = Vec::Zero();
 
 		for (int i = 0; i < p->getPosition().rows(); i++) {

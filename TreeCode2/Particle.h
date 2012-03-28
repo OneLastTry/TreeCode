@@ -11,10 +11,13 @@
 
 namespace treecode {
 
-template <class Vec, class Mat> class Node;
+template <int D> class Node;
 
-template <class Vec, class Mat>
+template <int D>
 class Particle{
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	/**
 	 * @class Particle "Particle.h"
@@ -130,12 +133,12 @@ public:
     template <class RNG>
     static std::vector<Particle*>  generateParticles(unsigned int num_particles,
     		double mass, RNG& rng,
-    		const distribution::VectorDistribution<RNG,Vec>& position_dist,
-    		const distribution::VectorDistribution<RNG,Vec>& velocity_dist,
+    		const distribution::VectorDistribution<RNG,D>& position_dist,
+    		const distribution::VectorDistribution<RNG,D>& velocity_dist,
     		const distribution::ChargeDistribution<RNG>& charge_dist,
     		int& id){
     	//Create the vector and reserve the number of particles.
-    	std::vector<Particle<Vec,Mat>*> parts;
+    	std::vector<Particle<D>*> parts;
     	parts.reserve(num_particles);
     	for (unsigned int i = 0; i < num_particles; i++, id++) {
     		//Get charge, position and velocity from supplied distributions.
@@ -143,7 +146,7 @@ public:
     		Vec pos = position_dist.getVector(rng);
     		Vec vel = velocity_dist.getVector(rng);
     		//Generate a new particle, and add to vector.
-    		Particle* p = new Particle<Vec,Mat>(charge, mass, pos, vel, id);
+    		Particle* p = new Particle<D>(charge, mass, pos, vel, id);
     		parts.push_back(p);
     	}
     	return parts;
@@ -162,14 +165,14 @@ public:
     	}
     }
 
-    void setParent(Node<Vec,Mat>* parent){parent_ = parent;}
-    Node<Vec,Mat>* getParent() const {return parent_;}
+    void setParent(Node<D>* parent){parent_ = parent;}
+    Node<D>* getParent() const {return parent_;}
 
 private:
 	int charge, mass;
 	Vec position, velocity;
 	unsigned int id_;
-	Node<Vec,Mat>* parent_;
+	Node<D>* parent_;
 };
 
 } /* namespace treecode */

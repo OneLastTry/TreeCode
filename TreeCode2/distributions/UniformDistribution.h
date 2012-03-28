@@ -17,8 +17,9 @@ namespace distribution {
  * @tparam RNG Boost random number generator.
  */
 
-template <class RNG, class Vec>
-class UniformDistribution : public VectorDistribution<RNG, Vec>{
+template <class RNG, int D>
+class UniformDistribution : public VectorDistribution<RNG, D>{
+	typedef Eigen::Matrix<double, D, 1> Vec;
 public:
 	/**
 	 * @brief Construct new uniform distribution.

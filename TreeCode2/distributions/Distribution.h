@@ -13,8 +13,10 @@ namespace distribution {
  * @brief Base class for distributions returning a vector.
  * @tparam RNG Boost random number generator class (eg, mt19937).
  */
-template<class RNG, class Vec>
+template<class RNG, int D>
 class VectorDistribution {
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	/**
 	 * @brief Pure virtual method that must return a vector.

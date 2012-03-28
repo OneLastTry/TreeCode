@@ -17,8 +17,9 @@ namespace distribution {
  * @brief Generates vectors according to a Maxwell distribution.
  * @tparam RNG Boost random number generator.
  */
-template <class RNG, class Vec>
-class MaxwellDistribution : public VectorDistribution<RNG, Vec>{
+template <class RNG, int D>
+class MaxwellDistribution : public VectorDistribution<RNG, D>{
+	typedef Eigen::Matrix<double, D, 1> Vec;
 public:
 	/**
 	 * @brief Construct new MaxwellDistribution.

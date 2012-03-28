@@ -13,8 +13,11 @@
 
 namespace treecode {
 
-template <class Vec, class Mat, class RNG>
-class CullingBoundary : public PeriodicBoundary<Vec,Mat> {
+template <int D, class RNG>
+class CullingBoundary : public PeriodicBoundary<D> {
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	/**
 	 * @class CullingBoundary
@@ -42,10 +45,10 @@ public:
 	 * @param max_reset Describes which boundaries to reset at.
 	 */
 	CullingBoundary(const Vec origin, double length,
-			const distribution::VectorDistribution<RNG,Vec>& vel_dist,
+			const distribution::VectorDistribution<RNG,D>& vel_dist,
 			bool* min_reset, bool* max_reset,
 			RNG& rng):
-		PeriodicBoundary<Vec,Mat>(origin, length), 	//Parent class
+		PeriodicBoundary<D>(origin, length), 	//Parent class
 		vel_dist_(vel_dist),								//Velocity distribution
 		min_reset_(min_reset), max_reset_(max_reset),		//Min/max reset
 		rng_(rng), right_edge_(Vec::Zero()), left_edge_(Vec::Zero())
@@ -61,8 +64,8 @@ public:
 	 *
 	 * @param p	Particle to move.
 	 */
-	virtual void particleMoved(treecode::Particle<Vec,Mat>* p){
-		typedef PeriodicBoundary<Vec,Mat> parent;
+	virtual void particleMoved(treecode::Particle<D>* p){
+		typedef PeriodicBoundary<D> parent;
 
 		Vec translation_vector = Vec::Zero();
 
@@ -117,7 +120,7 @@ public:
 	}
 
 protected:
-	const distribution::VectorDistribution<RNG,Vec>& vel_dist_;
+	const distribution::VectorDistribution<RNG,D>& vel_dist_;
 	bool *min_reset_, *max_reset_;
 	RNG& rng_;
 	Vec right_edge_, left_edge_;

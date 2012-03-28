@@ -17,8 +17,11 @@ namespace treecode {
 
 namespace potentials {
 
-template <class Vec, class Mat>
-class CoulombForceThreeD : public Potential<Vec,Mat>{
+template <int D>
+class CoulombForceThreeD : public Potential<D>{
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 //friend class InterpolatedEwaldSum;
 
 public:
@@ -33,7 +36,7 @@ public:
  * @param conf	Global configuration.
  * @param bc	Boundary conditions.
  */
-CoulombForceThreeD(double force_softening, const treecode::BoundaryConditions<Vec,Mat>& bc) :
+CoulombForceThreeD(double force_softening, const treecode::BoundaryConditions<D>& bc) :
 	fs_(force_softening), boundary(bc){}
 
 /**
@@ -63,7 +66,7 @@ CoulombForceThreeD(double force_softening, const treecode::BoundaryConditions<Ve
  * @param precision	Precision used (monopole, dipole, quadrupole).
  * @return	Force due to node on part.
  */
-virtual Vec getForce(const Particle<Vec,Mat>& part, const Node<Vec,Mat>& node, Precision precision) const{
+virtual Vec getForce(const Particle<D>& part, const Node<D>& node, Precision precision) const{
 	Vec force = Vec::Zero();
 	Vec disp_vec = boundary.getDisplacementVector(part.getPosition(), node.getCentreOfCharge());
 	double r  = 1.0/disp_vec.norm();
@@ -117,7 +120,7 @@ virtual Vec getForce(const Particle<Vec,Mat>& part, const Node<Vec,Mat>& node, P
  * @param precision	Precision.
  * @return	Electric potential caused by node at part's position.
  */
-virtual double getPotential(const Particle<Vec,Mat>& part, const Node<Vec,Mat>& node, Precision precision) const{
+virtual double getPotential(const Particle<D>& part, const Node<D>& node, Precision precision) const{
 	double potential = 0;
 	Vec disp_vec = boundary.getDisplacementVector(part.getPosition(), node.getCentreOfCharge());
 	double r  = 1.0/disp_vec.norm();
@@ -147,7 +150,7 @@ virtual ~CoulombForceThreeD() {}
 
 private:
 	double fs_;
-	const treecode::BoundaryConditions<Vec,Mat>& boundary;
+	const treecode::BoundaryConditions<D>& boundary;
 };
 
 } /* namespace potentials */

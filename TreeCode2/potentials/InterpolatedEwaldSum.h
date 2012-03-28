@@ -24,8 +24,11 @@ namespace treecode {
 namespace potentials {
 
 
-template <class Vec, class Mat>
+template <int D>
 class EwaldNode{
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	EwaldNode(){
 		t0 = 0;
@@ -55,18 +58,21 @@ public:
 
 };
 
-template <class Vec, class Mat>
-class InterpolatedEwaldSum : public Potential<Vec, Mat>{
-	typedef boost::multi_array<EwaldNode<Vec,Mat>, 3> multi_arr;
+template <int D>
+class InterpolatedEwaldSum : public Potential<D>{
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
+	typedef boost::multi_array<EwaldNode<D>, 3> multi_arr;
 	typedef typename multi_arr::index index;
 
 public:
 	InterpolatedEwaldSum(
 			double force_softening,
-			const BoundaryConditions<Vec,Mat>& bounds,
+			const BoundaryConditions<D>& bounds,
 			unsigned int divisions,
-			const EwaldForce<Vec, Mat>& ewald_pot,
-			const CoulombForceThreeD<Vec, Mat>& coulomb_pot) :
+			const EwaldForce<D>& ewald_pot,
+			const CoulombForceThreeD<D>& coulomb_pot) :
 			fs_(force_softening),
 			bounds_(bounds), divisions_(divisions),
 			ewald_pot_(ewald_pot), coulomb_pot_(coulomb_pot){
@@ -111,13 +117,13 @@ public:
 		}
 	}
 
-	double getPotential(const Particle<Vec,Mat>& part, const Node<Vec, Mat>& node, Precision precision) const {
+	double getPotential(const Particle<D>& part, const Node<D>& node, Precision precision) const {
 		Vec disp_vec = bounds_.getDisplacementVector(part.getPosition(), node.getCentreOfCharge());
 		Vec centre_point = bounds_.getOrigin().array() + bounds_.getSize() / 2;
 		Vec disp_vec_to_centre = disp_vec + centre_point;
 
 		double potential = 0;
-		EwaldNode<Vec,Mat> interpolated = interpolate(disp_vec_to_centre);
+		EwaldNode<D> interpolated = interpolate(disp_vec_to_centre);
 		potential += node.getCharge() * interpolated.t0;
 		potential += node.getDipoleMoments().dot(interpolated.t1);
 		potential += 0.5 * (node.getQuadrupoleMoments().transpose() * interpolated.t2).trace();
@@ -129,12 +135,12 @@ public:
 		return potential;
 	}
 
-	Vec getForce(const Particle<Vec,Mat>& part, const Node<Vec,Mat>& node, Precision precision) const {
+	Vec getForce(const Particle<D>& part, const Node<D>& node, Precision precision) const {
 		Vec disp_vec = bounds_.getDisplacementVector(part.getPosition(), node.getCentreOfCharge());
 		Vec centre_point = bounds_.getOrigin().array() + bounds_.getSize() / 2;
 		Vec disp_vec_to_centre = disp_vec + centre_point;
 
-		EwaldNode<Vec,Mat> interpolated = interpolate(disp_vec_to_centre);
+		EwaldNode<D> interpolated = interpolate(disp_vec_to_centre);
 		Vec force = Vec::Zero();
 		force += node.getCharge() * interpolated.t1;
 		force += interpolated.t2 * node.getDipoleMoments();
@@ -146,7 +152,7 @@ public:
 		return force;
 	}
 
-	EwaldNode<Vec,Mat> interpolate(const Vec& r) const {
+	EwaldNode<D> interpolate(const Vec& r) const {
 		Vec dv = r - bounds_.getOrigin();
 
 		double x = dv[0];
@@ -165,28 +171,28 @@ public:
 		double yd = y/length_per_div_ - y0;
 		double zd = z/length_per_div_ - z0;
 
-		EwaldNode<Vec,Mat> n000 = (*field_)[x0][y0][z0];
-		EwaldNode<Vec,Mat> n001 = (*field_)[x0][y0][z1];
-		EwaldNode<Vec,Mat> n010 = (*field_)[x0][y1][z0];
-		EwaldNode<Vec,Mat> n011 = (*field_)[x0][y1][z1];
-		EwaldNode<Vec,Mat> n100 = (*field_)[x1][y0][z0];
-		EwaldNode<Vec,Mat> n101 = (*field_)[x1][y0][z1];
-		EwaldNode<Vec,Mat> n110 = (*field_)[x1][y1][z0];
-		EwaldNode<Vec,Mat> n111 = (*field_)[x1][y1][z1];
+		EwaldNode<D> n000 = (*field_)[x0][y0][z0];
+		EwaldNode<D> n001 = (*field_)[x0][y0][z1];
+		EwaldNode<D> n010 = (*field_)[x0][y1][z0];
+		EwaldNode<D> n011 = (*field_)[x0][y1][z1];
+		EwaldNode<D> n100 = (*field_)[x1][y0][z0];
+		EwaldNode<D> n101 = (*field_)[x1][y0][z1];
+		EwaldNode<D> n110 = (*field_)[x1][y1][z0];
+		EwaldNode<D> n111 = (*field_)[x1][y1][z1];
 
-		EwaldNode<Vec,Mat> i1 = n000 * (1 - zd) + n001 * zd;
-		EwaldNode<Vec,Mat> i2 = n010 * (1 - zd) + n011 * zd;
-		EwaldNode<Vec,Mat> j1 = n100 * (1 - zd) + n101 * zd;
-		EwaldNode<Vec,Mat> j2 = n110 * (1 - zd) + n111 * zd;
+		EwaldNode<D> i1 = n000 * (1 - zd) + n001 * zd;
+		EwaldNode<D> i2 = n010 * (1 - zd) + n011 * zd;
+		EwaldNode<D> j1 = n100 * (1 - zd) + n101 * zd;
+		EwaldNode<D> j2 = n110 * (1 - zd) + n111 * zd;
 
-		EwaldNode<Vec,Mat> w1 = i1 * (1 - yd) + i2 * yd;
-		EwaldNode<Vec,Mat> w2 = j1 * (1 - yd) + j2 * yd;
+		EwaldNode<D> w1 = i1 * (1 - yd) + i2 * yd;
+		EwaldNode<D> w2 = j1 * (1 - yd) + j2 * yd;
 
-		EwaldNode<Vec,Mat> interpolated = w1 * (1 - xd) + w2 * xd;
+		EwaldNode<D> interpolated = w1 * (1 - xd) + w2 * xd;
 		return interpolated;
 	}
 
-	void calculateNode(const Vec& disp_vec, EwaldNode<Vec,Mat>& node) {
+	void calculateNode(const Vec& disp_vec, EwaldNode<D>& node) {
 		node.t0 = 0;
 		node.t1 = Vec::Zero();
 		node.t2 = Mat::Zero(3, 3);
@@ -248,12 +254,12 @@ private:
 	double fs_;
 	multi_arr* field_;
 
-	const BoundaryConditions<Vec,Mat>& bounds_;
+	const BoundaryConditions<D>& bounds_;
 	unsigned int divisions_;
 	double length_per_div_;
 
-	const EwaldForce<Vec,Mat>& ewald_pot_;
-	const CoulombForceThreeD<Vec,Mat>& coulomb_pot_;
+	const EwaldForce<D>& ewald_pot_;
+	const CoulombForceThreeD<D>& coulomb_pot_;
 
 
 };

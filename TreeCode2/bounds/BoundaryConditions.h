@@ -8,8 +8,11 @@
 
 namespace treecode {
 
-template <class Vec, class Mat>
+template <int D>
 class BoundaryConditions {
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 	/**
 	 * @class BoundaryConditions
 	 * @brief Abstract base class representing boundary conditions of the system.
@@ -23,7 +26,7 @@ public:
 	 *
 	 * @param p Particle that has moved.
 	 */
-	virtual void particleMoved(treecode::Particle<Vec,Mat>* p) = 0;
+	virtual void particleMoved(treecode::Particle<D>* p) = 0;
 
 	/**
 	 * @brief Called whenever a timestep is over.

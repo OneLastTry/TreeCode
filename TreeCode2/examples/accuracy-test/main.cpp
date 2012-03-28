@@ -35,10 +35,10 @@ using namespace treecode::potentials;
 
 namespace po = boost::program_options;
 
-Vec getForceOnParticle(Particle3d* p, const Tree<Vec, Mat>& tree,
-const Potential<Vec, Mat>& potential,
-potentials::Precision precision, const AcceptanceCriterion<Vec, Mat>& mac) {
-	typedef Node<Vec, Mat> Node;
+Vec getForceOnParticle(Particle3d* p, const Tree<D>& tree,
+const Potential<D>& potential,
+potentials::Precision precision, const AcceptanceCriterion<D>& mac) {
+	typedef Node<D> Node;
 	typedef std::vector<Node*> interaction_list;
 	Vec force = Vec::Zero();
 
@@ -51,7 +51,7 @@ potentials::Precision precision, const AcceptanceCriterion<Vec, Mat>& mac) {
 	return force;
 }
 
-vector<Vec> getForces(const vector<Particle3d*>& parts, const vector<int>& particle_indices, const Tree3d& tree, const Potential<Vec, Mat>& potential, Precision prec, const AcceptanceCriterion<Vec, Mat>& mac){
+vector<Vec> getForces(const vector<Particle3d*>& parts, const vector<int>& particle_indices, const Tree3d& tree, const Potential<D>& potential, Precision prec, const AcceptanceCriterion<D>& mac){
 	vector<Vec> forces;
 
 	for(unsigned int i = 0; i < particle_indices.size(); i++){
@@ -115,7 +115,7 @@ void printTimings(){
 		bounds.init(parts);
 		CoulombForce3d potential(0.0, bounds);
 		LeapfrogPusher3d push(0.01, bounds, potential);
-		BarnesHutMAC<Vec, Mat> mac(0.0, bounds);
+		BarnesHutMAC<D> mac(0.0, bounds);
 		Tree3d tree(bounds, parts);
 		tree.rebuild();
 
@@ -142,7 +142,7 @@ void printTimings(){
 
 }
 
-void printErrors(unsigned int n_test, vector<Particle3d*>& parts, const Tree3d& tree, const Potential<Vec,Mat>& potential, BarnesHutMAC<Vec, Mat>& mac){
+void printErrors(unsigned int n_test, vector<Particle3d*>& parts, const Tree3d& tree, const Potential<D>& potential, BarnesHutMAC<D>& mac){
 	//Generate the list of particles to look at
 	boost::mt19937 rng;
 	boost::uniform_01<double> dist;
@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
 	bounds.init(parts);
 	CoulombForce3d potential(force_softening, bounds);
 	LeapfrogPusher3d push(timestep, bounds, potential);
-	BarnesHutMAC<Vec,Mat> mac(0.0, bounds);
+	BarnesHutMAC<D> mac(0.0, bounds);
 	Tree3d tree(bounds, parts);
 	tree.rebuild();
 

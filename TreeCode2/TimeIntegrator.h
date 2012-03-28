@@ -21,8 +21,11 @@
 
 namespace treecode {
 
-template <class Vec, class Mat>
+template <int D>
 class TimeIntegrator {
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	/**
 	 * @class TimeIntegrator
@@ -42,11 +45,11 @@ public:
 	 */
 	TimeIntegrator(
 			double timestep, double max_time,
-			std::vector<Particle<Vec,Mat>*>& particles,
-			Tree<Vec,Mat>& tree,
-			BoundaryConditions<Vec,Mat>& bounds,
-			pusher::Pusher<Vec,Mat>& pusher,
-			const AcceptanceCriterion<Vec,Mat>& mac):
+			std::vector<Particle<D>*>& particles,
+			Tree<D>& tree,
+			BoundaryConditions<D>& bounds,
+			pusher::Pusher<D>& pusher,
+			const AcceptanceCriterion<D>& mac):
 		dt_(timestep), max_time_(max_time),
 		bounds_(bounds), particles_(particles), pusher_(pusher),
 		tree_(tree), energies_out_(NULL), mac_(mac)
@@ -74,7 +77,7 @@ public:
 				if(energies_out_ != NULL)
 					(*energies_out_) << (i * dt_) << "\t" << energies.first << "\t" << energies.second << std::endl;
 
-				typedef output::ParticleTracker<Vec,Mat> track;
+				typedef output::ParticleTracker<D> track;
 				BOOST_FOREACH(track* t, particle_trackers_)
 					t->output();
 			}
@@ -100,21 +103,21 @@ public:
 	 * @brief Add particle tracker.
 	 * @param tracker Tracker.
 	 */
-	void addParticleTracker(output::ParticleTracker<Vec,Mat>* tracker){
+	void addParticleTracker(output::ParticleTracker<D>* tracker){
 		particle_trackers_.push_back(tracker);
 	}
 
 private:
 	double dt_, max_time_;
-	BoundaryConditions<Vec,Mat>& bounds_;
-	std::vector<Particle<Vec,Mat>*>& particles_;
-	pusher::Pusher<Vec,Mat>& pusher_;
-	Tree<Vec,Mat>& tree_;
+	BoundaryConditions<D>& bounds_;
+	std::vector<Particle<D>*>& particles_;
+	pusher::Pusher<D>& pusher_;
+	Tree<D>& tree_;
 
 	std::ofstream *energies_out_;
-	const AcceptanceCriterion<Vec,Mat>& mac_;
+	const AcceptanceCriterion<D>& mac_;
 
-	std::vector<output::ParticleTracker<Vec,Mat>* > particle_trackers_;
+	std::vector<output::ParticleTracker<D>* > particle_trackers_;
 };
 
 } /* namespace treecode */

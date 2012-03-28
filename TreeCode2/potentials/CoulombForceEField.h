@@ -14,14 +14,17 @@
 namespace treecode {
 namespace potentials {
 
-template <class Vec, class Mat>
-class CoulombForceEField : public CoulombForceThreeD<Vec, Mat>{
-public:
-	CoulombForceEField(double force_softening, const BoundaryConditions<Vec,Mat>& bc, Vec e_field):
-		CoulombForceThreeD<Vec, Mat>(force_softening, bc), e_field_(e_field){}
+template <int D>
+class CoulombForceEField : public CoulombForceThreeD<D>{
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
 
-	virtual Vec getForce(const Particle<Vec,Mat>& part, const Node<Vec,Mat>& node, Precision precision) const{
-		Vec force = CoulombForceThreeD<Vec, Mat>::getForce(part, node, precision);
+public:
+	CoulombForceEField(double force_softening, const BoundaryConditions<D>& bc, Vec e_field):
+		CoulombForceThreeD<D>(force_softening, bc), e_field_(e_field){}
+
+	virtual Vec getForce(const Particle<D>& part, const Node<D>& node, Precision precision) const{
+		Vec force = CoulombForceThreeD<D>::getForce(part, node, precision);
 		force += part.getCharge() * e_field_;
 		return force;
 	}

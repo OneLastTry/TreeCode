@@ -18,23 +18,26 @@
 namespace treecode{
 namespace output{
 
-template <class Vec, class Mat>
-class CoordTracker : public ParticleTracker<Vec,Mat>{
+template <int D>
+class CoordTracker : public ParticleTracker<D>{
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	enum token {
 		POSITION,
 		VELOCITY
 	};
 
-	CoordTracker(std::string filename, const std::vector<Particle<Vec,Mat>*>& parts, token record):
-		ParticleTracker<Vec,Mat>(filename, parts), record_(record){	}
+	CoordTracker(std::string filename, const std::vector<Particle<D>*>& parts, token record):
+		ParticleTracker<D>(filename, parts), record_(record){	}
 
 	virtual ~CoordTracker(){}
 
 
 	virtual void output(){
-		typedef ParticleTracker<Vec,Mat> parent;
-		typedef Particle<Vec,Mat> part_t;
+		typedef ParticleTracker<D> parent;
+		typedef Particle<D> part_t;
 		BOOST_FOREACH(part_t* p, parent::parts_){
 			if(record_ == POSITION){
 				for(unsigned int i = 0; i < p->getPosition().rows();i++)

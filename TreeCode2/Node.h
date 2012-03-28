@@ -14,8 +14,11 @@
 
 namespace treecode {
 
-template <class Vec, class Mat>
+template <int D>
 class Node {
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	/**
 	 * @brief Enum representing status of node.
@@ -88,7 +91,7 @@ public:
 					pos[j] = this->position[j] + this->size / 2 * ((i >> j) & 1);
 				}
 				if(daughters.size() != (2u << position.rows())){
-					Node<Vec,Mat> *new_node = new Node<Vec,Mat>(pos, this->size/2);
+					Node<D> *new_node = new Node<D>(pos, this->size/2);
 					new_node->setParent(this);
 					daughters.push_back(new_node);
 				}else {
@@ -99,7 +102,7 @@ public:
 				}
 			}
 
-			typedef Particle<Vec,Mat> part_t;
+			typedef Particle<D> part_t;
 			BOOST_FOREACH(part_t* p, particles){
 				//This finds which quadrant/octant of the parent the particle is in
 				unsigned int index = 0;
@@ -140,8 +143,8 @@ public:
 	 * @param[out] ilist	Interaction list for particle.
 	 * @param bounds	Boundary conditions of system.
 	 */
-	void addToInteractionList(const Particle<Vec,Mat>& p, std::vector<Node*>& ilist, const BoundaryConditions<Vec,Mat>& bounds,
-			const AcceptanceCriterion<Vec,Mat>& mac){
+	void addToInteractionList(const Particle<D>& p, std::vector<Node*>& ilist, const BoundaryConditions<D>& bounds,
+			const AcceptanceCriterion<D>& mac){
 
 		//If the current node is empty, do nothing.
 		//Similarly, if the node is a tree node and the particle is in it, do nothing.
@@ -149,13 +152,13 @@ public:
 			return;
 
 		//Either add to ilist or recurse into daughters.
-		typename AcceptanceCriterion<Vec,Mat>::result res = mac.accept(p, *this);
-		if(res == AcceptanceCriterion<Vec,Mat>::ACCEPT){
+		typename AcceptanceCriterion<D>::result res = mac.accept(p, *this);
+		if(res == AcceptanceCriterion<D>::ACCEPT){
 			ilist.push_back(this);
-		}else if(res == AcceptanceCriterion<Vec,Mat>::CONTINUE){
+		}else if(res == AcceptanceCriterion<D>::CONTINUE){
 			BOOST_FOREACH(Node* d, daughters)
 				d->addToInteractionList(p, ilist, bounds, mac);
-		}else if(res == AcceptanceCriterion<Vec,Mat>::REJECT){
+		}else if(res == AcceptanceCriterion<D>::REJECT){
 			return;
 		}
 	}
@@ -287,7 +290,7 @@ public:
 	 * @brief Add particle to node.
 	 * @param p	Particle to add.
 	 */
-	void addParticle(Particle<Vec,Mat>* p){particles.push_back(p);};
+	void addParticle(Particle<D>* p){particles.push_back(p);};
 
 	/**
 	 * @brief Get number of particles contained within this Node.
@@ -299,7 +302,7 @@ public:
 	 * @brief Set particles in bulk form.
 	 * @param p	Vector of Particle%s to assign.
 	 */
-	void setParticles(std::vector<Particle<Vec,Mat>*> p){particles = p;}
+	void setParticles(std::vector<Particle<D>*> p){particles = p;}
 	/**
 	 * @brief Set position (origin) of node.
 	 *
@@ -361,7 +364,7 @@ public:
 	 * @brief Get list of particles.
 	 * @return Particles.
 	 */
-	const std::vector<Particle<Vec,Mat>* >& getParticles() const {return particles;}
+	const std::vector<Particle<D>* >& getParticles() const {return particles;}
 
 	/**
 	 * @brief Get size of node.
@@ -373,19 +376,19 @@ public:
 	 * @brief Set parent node.
 	 * @param parent Parent node.
 	 */
-	void setParent(Node<Vec,Mat>* parent){parent_ = parent;}
+	void setParent(Node<D>* parent){parent_ = parent;}
 
 	/**
 	 * @brief Get Parent node.
 	 * @return Parent node.
 	 */
-	Node<Vec,Mat>* getParent() const {return parent_;}
+	Node<D>* getParent() const {return parent_;}
 
 private:
 	Vec position;
 	double size;
-	std::vector<Particle<Vec,Mat>*> particles;
-	std::vector<Node<Vec,Mat>*> daughters;
+	std::vector<Particle<D>*> particles;
+	std::vector<Node<D>*> daughters;
 	Node::tree_status status;
 
 	double charge, abs_charge;
@@ -394,7 +397,7 @@ private:
 	Vec dipole_moments;
 	Mat quadrupole_moments;
 
-	Node<Vec,Mat>* parent_;
+	Node<D>* parent_;
 };
 
 } /* namespace treecode */

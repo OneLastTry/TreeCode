@@ -21,19 +21,19 @@
 namespace treecode{
 namespace output{
 
-template <class Vec, class Mat>
-class RadiusTracker : public ParticleTracker<Vec,Mat>{
+template <int D>
+class RadiusTracker : public ParticleTracker<D>{
 public:
 
-	RadiusTracker(std::string filename, const std::vector<Particle<Vec,Mat>*>& parts, const Vec& origin, double bin_width):
-		ParticleTracker<Vec,Mat>(filename, parts), origin_(origin), bin_width_(bin_width){}
+	RadiusTracker(std::string filename, const std::vector<Particle<D>*>& parts, const Vec& origin, double bin_width):
+		ParticleTracker<D>(filename, parts), origin_(origin), bin_width_(bin_width){}
 
 	virtual ~RadiusTracker(){	}
 
 
 	virtual void output(){
-		typedef ParticleTracker<Vec,Mat> parent;
-		typedef Particle<Vec,Mat> part_t;
+		typedef ParticleTracker<D> parent;
+		typedef Particle<D> part_t;
 		typedef std::map<int, double>::iterator map_it;
 
 		bins_.erase(bins_.begin(), bins_.end());

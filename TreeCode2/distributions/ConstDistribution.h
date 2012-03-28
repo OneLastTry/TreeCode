@@ -15,8 +15,10 @@ namespace distribution {
  * @brief Distribution class that returns a constant vector.
  * @tparam Boost random number generator.
  */
-template <class RNG, class Vec>
-class ConstDistribution : public VectorDistribution<RNG, Vec>{
+template <class RNG, int D>
+class ConstDistribution : public VectorDistribution<RNG, D>{
+
+	typedef Eigen::Matrix<double, D, 1> Vec;
 public:
 	/**
 	 * @brief Construct new ConstDistribution.

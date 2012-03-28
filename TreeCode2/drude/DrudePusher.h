@@ -21,16 +21,19 @@
 namespace treecode{
 namespace pusher{
 
-template<class Vec, class Mat>
-class DrudePusher : public Pusher<Vec, Mat>{
+template<int D>
+class DrudePusher : public Pusher<D>{
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
-	DrudePusher(const Configuration<Vec>& config, BoundaryConditions<Vec,Mat>& bounds, DrudeMAC<Vec,Mat>& mac):
+	DrudePusher(const Configuration<Vec>& config, BoundaryConditions<D>& bounds, DrudeMAC<D>& mac):
 		config_(config), bounds_(bounds), mac_(mac){}
 
-	std::pair<double, double> push_particles(std::vector<Particle<Vec,Mat>*> parts, Tree<Vec,Mat>& tree,
-			BoundaryConditions<Vec,Mat>& bc,
-			potentials::Precision prec, const AcceptanceCriterion<Vec, Mat>& mac){
-		typedef Particle<Vec,Mat> part_t;
+	std::pair<double, double> push_particles(std::vector<Particle<D>*> parts, Tree<D>& tree,
+			BoundaryConditions<D>& bc,
+			potentials::Precision prec, const AcceptanceCriterion<D>& mac){
+		typedef Particle<D> part_t;
 
 		tree.rebuild();
 
@@ -45,10 +48,10 @@ public:
 	}
 
 private:
-	std::pair<double, double> push_particle_recursive(Particle<Vec,Mat>* p, Tree<Vec,Mat>& tree,
-			BoundaryConditions<Vec,Mat>& bc,
-				potentials::Precision prec, const AcceptanceCriterion<Vec, Mat>& mac, double dt){
-		typedef std::vector<Node<Vec,Mat>* > interaction_list;
+	std::pair<double, double> push_particle_recursive(Particle<D>* p, Tree<D>& tree,
+			BoundaryConditions<D>& bc,
+				potentials::Precision prec, const AcceptanceCriterion<D>& mac, double dt){
+		typedef std::vector<Node<D>* > interaction_list;
 
 		mac_.setTimestep(dt);
 
@@ -62,12 +65,12 @@ private:
 		if(ilist.size() > 0){
 			double distance_to_travel = p->getVelocity().norm() * config_.getTimestep();
 			for(typename interaction_list::iterator it = ilist.begin(); it < ilist.end(); it++){
-				Node<Vec,Mat>* n = *it;
-				BigParticle<Vec,Mat>* interacting_particle = dynamic_cast<BigParticle<Vec,Mat>*>(n->getParticles().front());
-				if(!DrudeMAC<Vec,Mat>::willIntersect(*p, *interacting_particle, bounds_))
+				Node<D>* n = *it;
+				BigParticle<D>* interacting_particle = dynamic_cast<BigParticle<D>*>(n->getParticles().front());
+				if(!DrudeMAC<D>::willIntersect(*p, *interacting_particle, bounds_))
 					continue;
 
-				double distance_to_edge = DrudeMAC<Vec,Mat>::distanceToIntersection(*p, *interacting_particle, bounds_);
+				double distance_to_edge = DrudeMAC<D>::distanceToIntersection(*p, *interacting_particle, bounds_);
 				if(distance_to_edge > distance_to_travel || distance_to_edge < 0)
 					continue;
 				//Move to edge of particle
@@ -96,8 +99,8 @@ private:
 
 protected:
 	const Configuration<Vec>& config_;
-	BoundaryConditions<Vec,Mat>& bounds_;
-	DrudeMAC<Vec,Mat>& mac_;
+	BoundaryConditions<D>& bounds_;
+	DrudeMAC<D>& mac_;
 };
 
 }

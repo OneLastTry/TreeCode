@@ -12,9 +12,9 @@
 
 namespace treecode{
 
-template <class V, class M> class Node;
+template <int D> class Node;
 
-template <class Vec, class Mat>
+template <int D>
 class AcceptanceCriterion{
 public:
 	enum result {
@@ -23,7 +23,7 @@ public:
 		REJECT
 	};
 
-	virtual result accept(const Particle<Vec,Mat>& p, const Node<Vec,Mat>& n) const = 0;
+	virtual result accept(const Particle<D>& p, const Node<D>& n) const = 0;
 };
 }
 

@@ -71,8 +71,8 @@ int main(int argc, char **argv) {
 	using namespace treecode::pusher;
 	using namespace treecode::output;
 
-	typedef Particle<Vec,Mat> Particle_t;
-	typedef BigParticle<Vec,Mat> BigParticle_t;
+	typedef Particle<D> Particle_t;
+	typedef BigParticle<D> BigParticle_t;
 
 
 	using boost::mt19937;
@@ -102,27 +102,27 @@ int main(int argc, char **argv) {
 
 	for(double x = -45; x < 50; x+= 10){
 		for(double y = -45; y < 50; y+= 10){
-			big_ions.push_back(new BigParticle<Vec,Mat>(+1, 100000, Vec(x,y), Vec(0,0), id, radius));
+			big_ions.push_back(new BigParticle<D>(+1, 100000, Vec(x,y), Vec(0,0), id, radius));
 		}
 	}
 
 	ParticleAvoidingDistribution<mt19937, Vec, BigParticle_t> pos_vec(origin, max, big_ions);
-	electrons = Particle<Vec,Mat>::generateParticles(num_particles, 1, rng, pos_vec, e_velocity_dist, electron_charges, id);
+	electrons = Particle<D>::generateParticles(num_particles, 1, rng, pos_vec, e_velocity_dist, electron_charges, id);
 
 
 	parts.insert(parts.end(), big_ions.begin(), big_ions.end());
 	parts.insert(parts.end(), electrons.begin(), electrons.end());
 
-	CountingPeriodicBounds<Vec,Mat>	bounds(c, origin, length, cerr);
-	DrudeMAC<Vec, Mat>		mac(bounds, c.getTimestep());
-	CullingDrudePusher<Vec, Mat, mt19937> 	push(c, bounds, e_velocity_dist, mac, rng);
-	Tree<Vec,Mat>			tree(c, bounds, parts);
-	TimeIntegrator<Vec,Mat>	integrator(c, electrons, tree, bounds, push, mac);
+	CountingPeriodicBounds<D>	bounds(c, origin, length, cerr);
+	DrudeMAC<D>		mac(bounds, c.getTimestep());
+	CullingDrudePusher<D, mt19937> 	push(c, bounds, e_velocity_dist, mac, rng);
+	Tree<D>			tree(c, bounds, parts);
+	TimeIntegrator<D>	integrator(c, electrons, tree, bounds, push, mac);
 	integrator.setEnergyOutputFile("energies.csv");
 
 
-	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("positions.csv", parts, CoordTracker<Vec,Mat>::POSITION));
-	integrator.addParticleTracker(new CoordTracker<Vec,Mat>("velocities.csv", parts, CoordTracker<Vec,Mat>::VELOCITY));
+	integrator.addParticleTracker(new CoordTracker<D>("positions.csv", parts, CoordTracker<D>::POSITION));
+	integrator.addParticleTracker(new CoordTracker<D>("velocities.csv", parts, CoordTracker<D>::VELOCITY));
 
 
 	integrator.start(quadrupole, 1);

@@ -19,8 +19,11 @@
 
 namespace treecode {
 
-template <class Vec, class Mat>
+template <int D>
 class Tree {
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	/**
 	 * @class Tree "Tree.h"
@@ -36,13 +39,13 @@ public:
 	 * @param bc		Boundary conditions the tree will obey.
 	 * @param parts		Vector of particles that the tree is constructed around.
 	 */
-	Tree(const BoundaryConditions<Vec, Mat>& bc, const std::vector<Particle<Vec,Mat>*>& parts):
+	Tree(const BoundaryConditions<D>& bc, const std::vector<Particle<D>*>& parts):
 		boundary(bc), particles(parts){
 		//Create a root node using config and boundary conditions
-		root = new Node<Vec,Mat>(bc.getOrigin(), bc.getSize());
+		root = new Node<D>(bc.getOrigin(), bc.getSize());
 		//Populate with particles, and gently inform the node it is root
 		root->setParticles(parts);
-		root->setStatus(Node<Vec,Mat>::ROOT);
+		root->setStatus(Node<D>::ROOT);
 	}
 
 	/**
@@ -69,7 +72,7 @@ public:
 	 * @param p		Particle to generate the list for.231
 	 * @param[out] ilist	Nodes to interact with will be placed here.
 	 */
-	void getInteractionList(const Particle<Vec,Mat>& p, std::vector<Node<Vec,Mat>*>& ilist, const AcceptanceCriterion<Vec,Mat>& mac) const{
+	void getInteractionList(const Particle<D>& p, std::vector<Node<D>*>& ilist, const AcceptanceCriterion<D>& mac) const{
 		//Make sure the list is clear, and then delegate to the root node.
 		ilist.clear();
 		root->addToInteractionList(p, ilist, boundary, mac);
@@ -133,12 +136,12 @@ public:
 	 * Get root node.
 	 * @return	Root node.
 	 */
-	const Node<Vec,Mat>& getRoot() const{return *root; }
+	const Node<D>& getRoot() const{return *root; }
 
 private:
-	const BoundaryConditions<Vec,Mat>& boundary;
-	const std::vector<Particle<Vec,Mat>*>& particles;
-	Node<Vec,Mat>* root;
+	const BoundaryConditions<D>& boundary;
+	const std::vector<Particle<D>*>& particles;
+	Node<D>* root;
 };
 
 } /* namespace treecode */

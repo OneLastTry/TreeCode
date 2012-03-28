@@ -14,8 +14,10 @@
 namespace treecode {
 namespace distribution {
 
-template <class RNG, class Vec, class T>
-class ParticleAvoidingDistribution : public VectorDistribution<RNG, Vec>{
+template <class RNG, int D, class T>
+class ParticleAvoidingDistribution : public VectorDistribution<RNG, D>{
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	ParticleAvoidingDistribution(const Vec& min, const Vec& max, const std::vector<T*>& big_particles) :
 		minimum(min), maximum(max), big_particles_(big_particles){}

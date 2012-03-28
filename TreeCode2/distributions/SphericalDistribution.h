@@ -24,8 +24,10 @@ namespace distribution {
  *
  * @tparam RNG Random number generator.
  */
-template <class RNG, class Vec>
-class SphericalDistribution : public VectorDistribution<RNG, Vec>{
+template <class RNG, int D>
+class SphericalDistribution : public VectorDistribution<RNG, D>{
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	/**
 	 * @brief Constructor for a distribution that supplies points within an n-sphere.

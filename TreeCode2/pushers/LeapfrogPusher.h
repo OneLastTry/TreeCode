@@ -22,8 +22,10 @@ namespace treecode {
 
 namespace pusher {
 
-template <class Vec, class Mat>
-class LeapfrogPusher : public Pusher<Vec, Mat> {
+template <int D>
+class LeapfrogPusher : public Pusher<D> {
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
 public:
 	/**
 	 * @class LeapfrogPusher "pushers/LeapfrogPusher.h"
@@ -35,7 +37,7 @@ public:
 	 * @param bc	Boundary conditions.
 	 * @param pot	Potential.
 	 */
-	LeapfrogPusher(double timestep, const BoundaryConditions<Vec,Mat>& bc, const potentials::Potential<Vec,Mat>& pot):
+	LeapfrogPusher(double timestep, const BoundaryConditions<D>& bc, const potentials::Potential<D>& pot):
 		dt_(timestep), boundary(bc), potential(pot){}
 
 	/**
@@ -49,12 +51,12 @@ public:
 	 * @param tree		Tree object, containg all particles.
 	 * @param precision	Precision to use in force calculation.
 	 */
-	void init(std::vector<Particle<Vec,Mat>*> parts, Tree<Vec,Mat>& tree, potentials::Precision precision,
-			const AcceptanceCriterion<Vec,Mat>& mac){
+	void init(std::vector<Particle<D>*> parts, Tree<D>& tree, potentials::Precision precision,
+			const AcceptanceCriterion<D>& mac){
 		using std::vector;
-		typedef Node<Vec,Mat> Node;
+		typedef Node<D> Node;
 		typedef vector<Node*> interaction_list;
-		typedef Particle<Vec,Mat> part_t;
+		typedef Particle<D> part_t;
 
 		//Rebuild the tree, to get the right nodes.
 		tree.rebuild();
@@ -77,13 +79,13 @@ public:
 	 * @param precision	Precision to use in force calculation.
 	 */
 	std::pair<double, double> push_particles(
-			std::vector<Particle<Vec,Mat>*> parts, Tree<Vec,Mat>& tree, BoundaryConditions<Vec,Mat>& bc,
+			std::vector<Particle<D>*> parts, Tree<D>& tree, BoundaryConditions<D>& bc,
 			potentials::Precision precision,
-			const AcceptanceCriterion<Vec,Mat>& mac){
+			const AcceptanceCriterion<D>& mac){
 
-		typedef Node<Vec,Mat> Node;
+		typedef Node<D> Node;
 		typedef std::vector<Node*> interaction_list;
-		typedef Particle<Vec,Mat> part_t;
+		typedef Particle<D> part_t;
 
 		using Eigen::Vector2d;
 
@@ -104,7 +106,7 @@ public:
 	//	std::for_each(parts.begin(), parts.end(), [&tree,this,&precision] (Particle* p){
 		#pragma omp parallel for reduction(+:ke,pe) schedule(dynamic)
 		for(unsigned int i=0;i<parts.size();i++){
-			Particle<Vec,Mat>* p = parts[i];
+			Particle<D>* p = parts[i];
 			interaction_list ilist;
 			tree.getInteractionList(*p, ilist, mac);
 			double initial_vel = p->getVelocity().norm();
@@ -133,7 +135,7 @@ private:
 	 * @param dt		Timestep.
 	 * @param precision	Precision to use in force calculation.
 	 */
-	void push_velocity(Particle<Vec,Mat>& particle, const Node<Vec,Mat>& node, double dt, potentials::Precision precision){
+	void push_velocity(Particle<D>& particle, const Node<D>& node, double dt, potentials::Precision precision){
 		Vec force = potential.getForce(particle, node, precision);
 	//	std::cerr << force[0] << "\t" << force[1] << "\t" << force[2] << "\t";
 		particle.updateVelocity(force / particle.getMass() * dt);
@@ -144,13 +146,13 @@ private:
 	 * @param particle	Particle to push.
 	 * @param dt		Timestep.
 	 */
-	void push_position(Particle<Vec,Mat>& particle, double dt){
+	void push_position(Particle<D>& particle, double dt){
 		particle.updatePosition(particle.getVelocity() * dt);
 	}
 
 	double dt_;
-	const BoundaryConditions<Vec,Mat>& boundary;
-	const potentials::Potential<Vec,Mat>& potential;
+	const BoundaryConditions<D>& boundary;
+	const potentials::Potential<D>& potential;
 };
 
 } /* namespace pushers */

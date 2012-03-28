@@ -20,11 +20,14 @@
 namespace treecode {
 namespace potentials {
 
-template <class Vec, class Mat> class InterpolatedEwaldSum;
+template <int D> class InterpolatedEwaldSum;
 
-template <class Vec, class Mat>
-class EwaldForce : public Potential<Vec, Mat>{
-	friend class InterpolatedEwaldSum<Vec,Mat>;
+template <int D>
+class EwaldForce : public Potential<D>{
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
+	friend class InterpolatedEwaldSum<D>;
 
 public:
 
@@ -46,7 +49,7 @@ public:
 	 */
 	EwaldForce(
 			double force_softening,
-			const BoundaryConditions<Vec,Mat>& bounds,
+			const BoundaryConditions<D>& bounds,
 			double alpha,
 			int real_space_iterations, int fourier_space_iterations) :
 			bounds_(bounds), fs_(force_softening), alpha_(alpha),
@@ -84,7 +87,7 @@ public:
 	 *
 	 * TODO: Pay attention to precision paremeter
 	 */
-	double getPotential(const Particle<Vec,Mat>& part, const Node<Vec, Mat>& node, Precision precision) const{
+	double getPotential(const Particle<D>& part, const Node<D>& node, Precision precision) const{
 		double potential = 0;
 
 		//We'll need this later.
@@ -155,7 +158,7 @@ public:
 	 *
 	 * TODO: Actually pay attention to precision.
 	 */
-	Vec getForce(const Particle<Vec,Mat>& part, const Node<Vec, Mat>& node, Precision precision) const{
+	Vec getForce(const Particle<D>& part, const Node<D>& node, Precision precision) const{
 		Vec force = Vec::Zero();
 
 		//This  is pretty much the same as getPotential(), but it obeys the formula
@@ -192,7 +195,7 @@ public:
 	}
 
 	//Not used
-	Vec real_space_force(const Particle<Vec,Mat>& p1, const Particle<Vec,Mat>& p2){
+	Vec real_space_force(const Particle<D>& p1, const Particle<D>& p2){
 		Vec force = Vec::Zero();
 		for (int i = -real_space_iterations_; i < real_space_iterations_; i++) {
 			for (int j = -real_space_iterations_; j < real_space_iterations_; j++) {
@@ -213,7 +216,7 @@ public:
 	}
 
 	//Not used
-	Vec fourier_space_force(const Particle<Vec,Mat>& p1, const Particle<Vec,Mat>& p2){
+	Vec fourier_space_force(const Particle<D>& p1, const Particle<D>& p2){
 		Vec force = Vec::Zero();
 
 		double L = bounds_.getSize();
@@ -236,7 +239,7 @@ public:
 	}
 
 	//Not used
-	double real_space_pot(const Particle<Vec,Mat>& p1, const Particle<Vec,Mat>& p2) {
+	double real_space_pot(const Particle<D>& p1, const Particle<D>& p2) {
 		double potential = 0;
 		for (int i = -real_space_iterations_; i < real_space_iterations_; i++) {
 			for (int j = -real_space_iterations_; j < real_space_iterations_; j++) {
@@ -251,7 +254,7 @@ public:
 	}
 
 	//Not used
-	double fourier_space_pot(const Particle<Vec,Mat>& p1, const Particle<Vec,Mat>& p2) {
+	double fourier_space_pot(const Particle<D>& p1, const Particle<D>& p2) {
 		double potential = 0;
 
 		double L = bounds_.getSize();
@@ -327,7 +330,7 @@ private:
 		double L = bounds_.getSize();
 		return (-4.0*M_PI/(L*L*L) * outer_product) * A(h_norm) * cos(2.0*M_PI/L * h.dot(r0));
 	}
-	const BoundaryConditions<Vec,Mat>& bounds_;
+	const BoundaryConditions<D>& bounds_;
 protected:
 	double fs_;
 	double alpha_;

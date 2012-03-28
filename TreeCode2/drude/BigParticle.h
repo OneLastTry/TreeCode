@@ -11,11 +11,14 @@
 #include "../Particle.h"
 
 namespace treecode{
-template <class Vec, class Mat>
-class BigParticle : public Particle<Vec,Mat>{
+template <int D>
+class BigParticle : public Particle<D>{
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	BigParticle(int q, int m, const Vec& pos, const Vec& vel, unsigned int id, double radius):
-		Particle<Vec,Mat>(q,m,pos,vel,id), radius_(radius){}
+		Particle<D>(q,m,pos,vel,id), radius_(radius){}
 
 	double getRadius()const {return radius_;}
 

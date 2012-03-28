@@ -17,11 +17,14 @@
 namespace treecode{
 namespace output{
 
-template <class Vec, class Mat>
+template <int D>
 class ParticleTracker{
+	typedef Eigen::Matrix<double, D, D> Mat;
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 
-	ParticleTracker(std::string filename, const std::vector<Particle<Vec,Mat>*>& parts):
+	ParticleTracker(std::string filename, const std::vector<Particle<D>*>& parts):
 		parts_(parts){
 		if(filename.compare("stdout") == 0)
 			out_ = &std::cout;
@@ -40,7 +43,7 @@ public:
 	virtual void output() = 0;
 protected:
 	std::ostream* out_;
-	const std::vector<Particle<Vec,Mat>* >& parts_;
+	const std::vector<Particle<D>* >& parts_;
 };
 
 }//output namespace

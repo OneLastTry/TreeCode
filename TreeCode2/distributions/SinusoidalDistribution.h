@@ -20,8 +20,10 @@ namespace distribution {
  * @brief Generates particles with sinusoidal density in one dimension, uniform in others.
  * @tparam RNG Random number generator class
  */
-template <class RNG, class Vec>
-class SinusoidalDistribution : public VectorDistribution<RNG, Vec>{
+template <class RNG, int D>
+class SinusoidalDistribution : public VectorDistribution<RNG, D>{
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	/**
 	 * @brief Construct distribution objects that returns vectors sinusoidally distributed in a given dimension.
@@ -41,7 +43,7 @@ public:
 				min_(min), max_(max),
 				wavelengths_(wavelengths), phase_(phase),
 				real_dist_(0, 2){
-		uniform_dist_ = new UniformDistribution<RNG, Vec>(min, max);
+		uniform_dist_ = new UniformDistribution<RNG, D>(min, max);
 	}
 
 	virtual Vec getVector(RNG& rng) const{
@@ -61,7 +63,7 @@ public:
 		delete uniform_dist_;
 	}
 private:
-	UniformDistribution<RNG, Vec>* uniform_dist_;
+	UniformDistribution<RNG, D>* uniform_dist_;
 	unsigned int dimension_;
 	Vec min_, max_;
 	double wavelengths_, phase_;

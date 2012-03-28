@@ -35,7 +35,7 @@ AC_ARG_WITH([eigen-dir],
         ],
         [CPPFLAGS="$CPPFLAGS"]
 )
-AC_CHECK_HEADER([Eigen/Dense], [], [AC_MSG_ERROR([Eigen is required])])
+AC_CHECK_HEADER([Eigen/Dense], [], [AC_MSG_ERROR([Eigen is required. Use --with-eigen-dir to set location])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

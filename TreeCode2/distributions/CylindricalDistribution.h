@@ -16,8 +16,10 @@ namespace distribution {
  * @brief Generates a 3D cylinder of random points.
  * @tparam RNG Random number generator.
  */
-template <class RNG, class Vec>
-class CylindricalDistribution : public VectorDistribution<RNG, Vec>{
+template <class RNG, int D>
+class CylindricalDistribution : public VectorDistribution<RNG, D>{
+	typedef Eigen::Matrix<double, D, 1> Vec;
+
 public:
 	/**
 	 * @brief Instantiate a new cylindrical distribution with the specified parameters.
@@ -35,7 +37,7 @@ public:
 	radius_(radius), height_(height),
 	height_dist_(0, height){
 		//Create a circular distribution for the radial part.
-		circ_dist_ = new SphericalDistribution<RNG, Vec>(2, bottom_centre, radius);
+		circ_dist_ = new SphericalDistribution<RNG, D>(2, bottom_centre, radius);
 	}
 
 	/**
@@ -56,7 +58,7 @@ public:
 		delete circ_dist_;
 	}
 private:
-	SphericalDistribution<RNG, Vec>* circ_dist_;
+	SphericalDistribution<RNG, D>* circ_dist_;
 	const Eigen::Vector2d bottom_centre_;
 	double radius_, height_;
 	boost::uniform_real<double> height_dist_;
