@@ -24,9 +24,8 @@ namespace distribution {
  *
  * @tparam RNG Random number generator.
  */
-template <class RNG, int D>
-class SphericalDistribution : public VectorDistribution<RNG, D>{
-	typedef Eigen::Matrix<double, D, 1> Vec;
+template <class RNG>
+class SphericalDistribution : public VectorDistribution<RNG>{
 
 public:
 	/**
@@ -35,7 +34,7 @@ public:
 	 * @param centre	Centre point of n-sphere.
 	 * @param radius	Radius of n-sphere.
 	 */
-	SphericalDistribution(unsigned int dims, const Vec& centre, double radius):
+	SphericalDistribution(unsigned int dims, const Eigen::VectorXd& centre, double radius):
 		dims_(dims), centre_(centre), radius_(radius), dist_(-radius, radius){}
 
 	/**
@@ -48,7 +47,7 @@ public:
 	 * @return		Random point within the specified n-sphere.
 	 */
 	Vec getVector(RNG& rng) const{
-		Vec v(dims_);
+		Eigen::VectorXd v(dims_);
 		do{
 			for(unsigned int i = 0; i < dims_; i++)
 				v[i] = dist_(rng);
@@ -60,7 +59,7 @@ public:
 	virtual ~SphericalDistribution(){}
 private:
 	unsigned int dims_;
-	Vec centre_;
+	Eigen::VectorXd centre_;
 	double radius_;
 	boost::random::uniform_real_distribution<double> dist_;
 };

@@ -17,16 +17,16 @@ namespace distribution {
  * @tparam RNG Boost random number generator.
  */
 
-template <class RNG, int D>
-class UniformDistribution : public VectorDistribution<RNG, D>{
-	typedef Eigen::Matrix<double, D, 1> Vec;
+template <class RNG>
+class UniformDistribution : public VectorDistribution<RNG>{
 public:
 	/**
 	 * @brief Construct new uniform distribution.
 	 * @param min	Minimum points of distribution.
 	 * @param max	Maximum points of distribution.
 	 */
-	UniformDistribution(const Vec& min, const Vec& max) : minimum(min), maximum(max){}
+	UniformDistribution(int dims, const Eigen::VectorXd& min, const Eigen::VectorXd& max) :
+		dims_(dims), minimum(min), maximum(max){}
 
 	/**
 	 * @brief Generate random vector, with each component somewhere between compoments of min and max.
@@ -35,7 +35,7 @@ public:
 	 */
 	virtual Vec getVector(RNG& rng) const  {
 		boost::uniform_01<double> dist;
-		Vec v;
+		Eigen::VectorXd v(dims_);
 		for (unsigned int j = 0; j < v.rows(); j++) {
 			v[j] = dist(rng) * (maximum[j] - minimum[j]) + minimum[j];
 		}
@@ -46,6 +46,7 @@ public:
 	 */
 	virtual ~UniformDistribution(){}
 private:
+	int dims_;
 	Vec minimum, maximum;
 };
 
