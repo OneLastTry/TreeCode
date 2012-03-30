@@ -38,8 +38,8 @@ public:
 	 * @param vel	Velocity.
 	 * @param id	A unique global ID (for data storage).
 	 */
-	Particle(int q, int m, const Vec& pos, const Vec& vel, unsigned int id) :
-			charge(q), mass(m), position(pos), velocity(vel), id_(id), parent_(NULL){}
+	Particle(int q, int m, const Vec& pos, const Vec& vel) :
+			charge(q), mass(m), position(pos), velocity(vel){}
 
 	/**
 	 * @brief Destructor. Nothing needs to be done.
@@ -133,8 +133,8 @@ public:
     template <class RNG>
     static std::vector<Particle*>  generateParticles(unsigned int num_particles,
     		double mass, RNG& rng,
-    		const distribution::VectorDistribution<RNG,D>& position_dist,
-    		const distribution::VectorDistribution<RNG,D>& velocity_dist,
+    		const distribution::VectorDistribution<RNG>& position_dist,
+    		const distribution::VectorDistribution<RNG>& velocity_dist,
     		const distribution::ChargeDistribution<RNG>& charge_dist,
     		int& id){
     	//Create the vector and reserve the number of particles.
@@ -165,14 +165,9 @@ public:
     	}
     }
 
-    void setParent(Node<D>* parent){parent_ = parent;}
-    Node<D>* getParent() const {return parent_;}
-
 private:
 	int charge, mass;
 	Vec position, velocity;
-	unsigned int id_;
-	Node<D>* parent_;
 };
 
 } /* namespace treecode */
