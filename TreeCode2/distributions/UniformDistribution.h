@@ -18,26 +18,26 @@ namespace distribution {
  */
 
 template <class RNG>
-class UniformDistribution : public VectorDistribution<RNG>{
+class UniformDistribution : public VectorDistribution{
 public:
 	/**
 	 * @brief Construct new uniform distribution.
 	 * @param min	Minimum points of distribution.
 	 * @param max	Maximum points of distribution.
 	 */
-	UniformDistribution(int dims, const Eigen::VectorXd& min, const Eigen::VectorXd& max) :
-		dims_(dims), minimum(min), maximum(max){}
+	UniformDistribution(RNG& rng, int dims, const Eigen::VectorXd& min, const Eigen::VectorXd& max) :
+		rng_(rng), dims_(dims), minimum(min), maximum(max){}
 
 	/**
 	 * @brief Generate random vector, with each component somewhere between compoments of min and max.
 	 * @param rng	Random number generator.
 	 * @return	Randomly distributed vector.
 	 */
-	virtual Vec getVector(RNG& rng) const  {
+	virtual Eigen::VectorXd getVector() const  {
 		boost::uniform_01<double> dist;
 		Eigen::VectorXd v(dims_);
 		for (unsigned int j = 0; j < v.rows(); j++) {
-			v[j] = dist(rng) * (maximum[j] - minimum[j]) + minimum[j];
+			v[j] = dist(rng_) * (maximum[j] - minimum[j]) + minimum[j];
 		}
 		return v;
 	}
@@ -46,8 +46,9 @@ public:
 	 */
 	virtual ~UniformDistribution(){}
 private:
+	RNG& rng_;
 	int dims_;
-	Vec minimum, maximum;
+	Eigen::VectorXd minimum, maximum;
 };
 
 } /* namespace distribution */

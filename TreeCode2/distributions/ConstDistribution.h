@@ -15,8 +15,7 @@ namespace distribution {
  * @brief Distribution class that returns a constant vector.
  * @tparam Boost random number generator.
  */
-template <class RNG>
-class ConstDistribution : public VectorDistribution<RNG>{
+class ConstDistribution : public VectorDistribution{
 
 public:
 	/**
@@ -30,7 +29,7 @@ public:
 	 * @param rng	(Unnecessary) random number generator.
 	 * @return Constant vector.
 	 */
-	virtual Eigen::VectorXd getVector(RNG& rng) const {
+	virtual Eigen::VectorXd getVector() const {
 		return constant;
 	}
 	/**

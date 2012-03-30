@@ -21,7 +21,7 @@ namespace distribution {
  * @tparam RNG Random number generator class
  */
 template <class RNG>
-class SinusoidalDistribution : public VectorDistribution<RNG>{
+class SinusoidalDistribution : public VectorDistribution{
 
 public:
 	/**
@@ -34,10 +34,12 @@ public:
 	 * @param phase		Phase of generator.
 	 */
 	SinusoidalDistribution(
+			RNG& rng,
 			unsigned int dimension,
 			const Eigen::VectorXd& min,
 			const Eigen::VectorXd& max,
 			double wavelengths, double phase):
+				rng_(rng),
 				dimension_(dimension),
 				min_(min), max_(max),
 				wavelengths_(wavelengths), phase_(phase),
@@ -45,15 +47,15 @@ public:
 		uniform_dist_ = new UniformDistribution<RNG>(min, max);
 	}
 
-	virtual Eigen::VectorXd getVector(RNG& rng) const{
-		Vec v;
+	virtual Eigen::VectorXd getVector() const{
+		Eigen::VectorXd v(min_.rows());
 		//Wavelength is the size of the system / the number of wavelengths
 		double wavelength = (max_[dimension_] - min_[dimension_]) / wavelengths_;
 		double k = 2.0 * M_PI / wavelength;	//Wavenumber
 		double u;
 		do{
-			u = real_dist_(rng);
-			v = uniform_dist_->getVector(rng);
+			u = real_dist_(rng_);
+			v = uniform_dist_->getVector();
 		}while(sin(v[dimension_]*k + phase_)+1 < u);
 		return v;
 	}
@@ -62,7 +64,8 @@ public:
 		delete uniform_dist_;
 	}
 private:
-	UniformDistribution<RNG, D>* uniform_dist_;
+	RNG& rng_;
+	UniformDistribution<RNG>* uniform_dist_;
 	unsigned int dimension_;
 	Eigen::VectorXd min_, max_;
 	double wavelengths_, phase_;

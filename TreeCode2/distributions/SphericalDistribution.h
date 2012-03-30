@@ -25,17 +25,22 @@ namespace distribution {
  * @tparam RNG Random number generator.
  */
 template <class RNG>
-class SphericalDistribution : public VectorDistribution<RNG>{
+class SphericalDistribution : public VectorDistribution{
 
 public:
 	/**
 	 * @brief Constructor for a distribution that supplies points within an n-sphere.
+	 * @param rng	Random number generator.
 	 * @param dims		Dimensions.
 	 * @param centre	Centre point of n-sphere.
 	 * @param radius	Radius of n-sphere.
 	 */
-	SphericalDistribution(unsigned int dims, const Eigen::VectorXd& centre, double radius):
-		dims_(dims), centre_(centre), radius_(radius), dist_(-radius, radius){}
+	SphericalDistribution(
+			RNG& rng,
+			unsigned int dims,
+			const Eigen::VectorXd& centre,
+			double radius):
+				rng_(rng), dims_(dims), centre_(centre), radius_(radius), dist_(-radius, radius){}
 
 	/**
 	 * @brief Generate points within an n-dimensional sphere.
@@ -43,14 +48,13 @@ public:
 	 * This is a simple method, that generates points within an n-cube,
 	 * and rejects any that have radius less than the specified radius.
 	 *
-	 * @param rng	Random number generator.
 	 * @return		Random point within the specified n-sphere.
 	 */
-	Vec getVector(RNG& rng) const{
+	Eigen::VectorXd getVector() const{
 		Eigen::VectorXd v(dims_);
 		do{
 			for(unsigned int i = 0; i < dims_; i++)
-				v[i] = dist_(rng);
+				v[i] = dist_(rng_);
 		}while(v.norm() > radius_);	//Reject any in corners of cube/square/hypercube
 		return v + centre_;	//Shift up by centre
 	}
@@ -58,6 +62,7 @@ public:
 	///Destrutor that does nothing.
 	virtual ~SphericalDistribution(){}
 private:
+	RNG& rng_;
 	unsigned int dims_;
 	Eigen::VectorXd centre_;
 	double radius_;

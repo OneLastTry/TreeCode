@@ -14,8 +14,7 @@ namespace distribution {
  * @tparam RNG Boost random number generator.
  */
 
-template <class RNG>
-class ConstantChargeDistribution : public ChargeDistribution<RNG>{
+class ConstantChargeDistribution : public ChargeDistribution{
 public:
 	/**
 	 * @brief Generates a new constant charge distribution.
@@ -28,7 +27,7 @@ public:
 	 * @param rng Unnecessary random number generator.
 	 * @return Charge.
 	 */
-	virtual int getCharge(RNG& rng) const  {return charge;}
+	virtual int getCharge() const  {return charge;}
 	///Destructor, does nothing.
 	virtual ~ConstantChargeDistribution(){}
 private:

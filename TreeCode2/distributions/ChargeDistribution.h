@@ -11,7 +11,6 @@ namespace distribution {
  * @brief Base class for distributions of particle charge.
  * @tparam RNG Boost random number generator.
  */
-template<class RNG>
 class ChargeDistribution {
 public:
 	/**
@@ -19,7 +18,8 @@ public:
 	 * @param rng	Random number generator.
 	 * @return Charge corresponding to derived class distribution.
 	 */
-	virtual int getCharge(RNG& rng) const = 0;
+	virtual int getCharge() const = 0;
+	virtual ~ChargeDistribution(){}
 };
 
 } /* namespace distribution */

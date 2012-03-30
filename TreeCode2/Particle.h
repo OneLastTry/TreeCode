@@ -120,20 +120,19 @@ public:
     template <class RNG>
     static std::vector<Particle*>  generateParticles(unsigned int num_particles,
     		double mass, RNG& rng,
-    		const distribution::VectorDistribution<RNG>& position_dist,
-    		const distribution::VectorDistribution<RNG>& velocity_dist,
-    		const distribution::ChargeDistribution<RNG>& charge_dist,
-    		int& id){
+    		const distribution::VectorDistribution& position_dist,
+    		const distribution::VectorDistribution& velocity_dist,
+    		const distribution::ChargeDistribution& charge_dist){
     	//Create the vector and reserve the number of particles.
     	std::vector<Particle<D>*> parts;
     	parts.reserve(num_particles);
-    	for (unsigned int i = 0; i < num_particles; i++, id++) {
+    	for (unsigned int i = 0; i < num_particles; i++) {
     		//Get charge, position and velocity from supplied distributions.
-    		int charge = charge_dist.getCharge(rng);
-    		Vec pos = position_dist.getVector(rng);
-    		Vec vel = velocity_dist.getVector(rng);
+    		int charge = charge_dist.getCharge();
+    		Vec pos = position_dist.getVector();
+    		Vec vel = velocity_dist.getVector();
     		//Generate a new particle, and add to vector.
-    		Particle* p = new Particle<D>(charge, mass, pos, vel, id);
+    		Particle* p = new Particle<D>(charge, mass, pos, vel);
     		parts.push_back(p);
     	}
     	return parts;

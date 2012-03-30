@@ -13,7 +13,6 @@ namespace distribution {
  * @brief Base class for distributions returning a vector.
  * @tparam RNG Boost random number generator class (eg, mt19937).
  */
-template<class RNG>
 class VectorDistribution {
 public:
 	/**
@@ -21,7 +20,8 @@ public:
 	 * @param rng	Random number generator.
 	 * @return Vector in derived class distribution.
 	 */
-	virtual Eigen::VectorXd getVector(RNG& rng) const = 0;
+	virtual Eigen::VectorXd getVector() const = 0;
+	virtual ~VectorDistribution(){}
 };
 
 } /* namespace distribution */
