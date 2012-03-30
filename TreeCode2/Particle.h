@@ -104,19 +104,6 @@ public:
     void updatePosition(Vec dx){ position += dx; }
 
     /**
-     * @brief Return particle ID number.
-     * @return Particle ID.
-     */
-    unsigned int getId() const {return id_;}
-
-    /**
-     * @brief Set particle ID number.
-     * @param id ID number.
-     */
-    void setId(int id) { id_ = id; }
-
-
-    /**
      * @brief Generate particles corresponding to supplied distributions.
      *
      * @tparam RNG				A boost random number generator, such as mt19937.
