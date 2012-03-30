@@ -8,6 +8,8 @@
 
 #include "Distribution.h"
 
+#include <iostream>
+
 namespace treecode {
 namespace distribution {
 
@@ -25,8 +27,8 @@ public:
 	 * @param min	Minimum points of distribution.
 	 * @param max	Maximum points of distribution.
 	 */
-	UniformDistribution(RNG& rng, int dims, const Eigen::VectorXd& min, const Eigen::VectorXd& max) :
-		rng_(rng), dims_(dims), minimum(min), maximum(max){}
+	UniformDistribution(RNG& rng, const Eigen::VectorXd& min, const Eigen::VectorXd& max) :
+		rng_(rng), minimum(min), maximum(max){}
 
 	/**
 	 * @brief Generate random vector, with each component somewhere between compoments of min and max.
@@ -35,7 +37,7 @@ public:
 	 */
 	virtual Eigen::VectorXd getVector() const  {
 		boost::uniform_01<double> dist;
-		Eigen::VectorXd v(dims_);
+		Eigen::VectorXd v(minimum.rows());
 		for (unsigned int j = 0; j < v.rows(); j++) {
 			v[j] = dist(rng_) * (maximum[j] - minimum[j]) + minimum[j];
 		}
@@ -47,7 +49,6 @@ public:
 	virtual ~UniformDistribution(){}
 private:
 	RNG& rng_;
-	int dims_;
 	Eigen::VectorXd minimum, maximum;
 };
 

@@ -1,6 +1,15 @@
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(srcdir)/TreeCode2
 
-bin_PROGRAMS = plasma_freq
-plasma_freq_SOURCES = TreeCode2/examples/3d-plasma-freq/main.cpp
+bin_PROGRAMS = simulator generator
+simulator_SOURCES = TreeCode2/Simulator.cpp
+generator_SOURCES = TreeCode2/ParticleGenerator.cpp
 
+check_PROGRAMS = treecode_tests
+treecode_tests_LDFLAGS = $(BOOST_UNIT_TEST_FRAMEWORK_LDFLAGS) 
+treecode_tests_LDADD   = $(BOOST_UNIT_TEST_FRAMEWORK_LIBS)
+treecode_tests_SOURCES = TreeCode2/tests/custom_asserts.cpp \
+						 TreeCode2/tests/ParticleTest.cpp \
+						 TreeCode2/tests/TreeTest.cpp \
+						 TreeCode2/tests/IOTest.cpp \
+						 TreeCode2/tests/DistributionTest.cpp

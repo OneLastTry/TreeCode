@@ -73,7 +73,6 @@ public:
 			calculateMonopoleMoment();
 			calculateDipoleMoment();
 			calculateQuadrupoleMoment();
-			particles.front()->setParent(this);
 			return;
 		}else{
 			if(getStatus() != ROOT)

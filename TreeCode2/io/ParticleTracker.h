@@ -19,8 +19,6 @@ namespace output{
 
 template <int D>
 class ParticleTracker{
-	typedef Eigen::Matrix<double, D, D> Mat;
-	typedef Eigen::Matrix<double, D, 1> Vec;
 
 public:
 
@@ -32,6 +30,7 @@ public:
 			out_ = &std::cerr;
 		else
 			out_ = new std::ofstream(filename.c_str());
+		out_->precision(20);
 	}
 
 	virtual ~ParticleTracker(){

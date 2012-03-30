@@ -44,7 +44,7 @@ public:
 				min_(min), max_(max),
 				wavelengths_(wavelengths), phase_(phase),
 				real_dist_(0, 2){
-		uniform_dist_ = new UniformDistribution<RNG>(min, max);
+		uniform_dist_ = new UniformDistribution<RNG>(rng, min, max);
 	}
 
 	virtual Eigen::VectorXd getVector() const{

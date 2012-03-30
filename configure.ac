@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([Treecode], [0.1], [stefans.mezulis@gmail.com])
-AC_CONFIG_SRCDIR([TreeCode2/Configuration.h])
+AC_CONFIG_SRCDIR([TreeCode2/Particle.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 LT_INIT
@@ -11,7 +11,7 @@ LT_INIT
 AC_LANG([C++])
 
 
-#AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CXX
@@ -21,6 +21,8 @@ AC_PROG_LIBTOOL
 # Checks for header files.
 AC_CHECK_HEADERS([cstdlib cmath])
 BOOST_REQUIRE([1.49])
+# We also want boost test
+BOOST_TEST
 
 #Read eigen dir from command line if supplied
 AC_ARG_WITH([eigen-dir],

@@ -34,11 +34,13 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = plasma_freq$(EXEEXT)
+bin_PROGRAMS = simulator$(EXEEXT) generator$(EXEEXT)
+check_PROGRAMS = treecode_tests$(EXEEXT)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(top_srcdir)/configure config.guess \
-	config.sub depcomp install-sh ltmain.sh missing
+	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
+	$(top_srcdir)/configure config.guess config.sub depcomp \
+	install-sh ltmain.sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/boost.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
@@ -49,13 +51,26 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
+CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_plasma_freq_OBJECTS = main.$(OBJEXT)
-plasma_freq_OBJECTS = $(am_plasma_freq_OBJECTS)
-plasma_freq_LDADD = $(LDADD)
+am_generator_OBJECTS = ParticleGenerator.$(OBJEXT)
+generator_OBJECTS = $(am_generator_OBJECTS)
+generator_LDADD = $(LDADD)
+am_simulator_OBJECTS = Simulator.$(OBJEXT)
+simulator_OBJECTS = $(am_simulator_OBJECTS)
+simulator_LDADD = $(LDADD)
+am_treecode_tests_OBJECTS = custom_asserts.$(OBJEXT) \
+	ParticleTest.$(OBJEXT) TreeTest.$(OBJEXT) IOTest.$(OBJEXT) \
+	DistributionTest.$(OBJEXT)
+treecode_tests_OBJECTS = $(am_treecode_tests_OBJECTS)
+am__DEPENDENCIES_1 =
+treecode_tests_DEPENDENCIES = $(am__DEPENDENCIES_1)
+treecode_tests_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(treecode_tests_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -69,8 +84,10 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(plasma_freq_SOURCES)
-DIST_SOURCES = $(plasma_freq_SOURCES)
+SOURCES = $(generator_SOURCES) $(simulator_SOURCES) \
+	$(treecode_tests_SOURCES)
+DIST_SOURCES = $(generator_SOURCES) $(simulator_SOURCES) \
+	$(treecode_tests_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -96,7 +113,11 @@ AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BOOST_CPPFLAGS = @BOOST_CPPFLAGS@
+BOOST_LDPATH = @BOOST_LDPATH@
 BOOST_ROOT = @BOOST_ROOT@
+BOOST_UNIT_TEST_FRAMEWORK_LDFLAGS = @BOOST_UNIT_TEST_FRAMEWORK_LDFLAGS@
+BOOST_UNIT_TEST_FRAMEWORK_LDPATH = @BOOST_UNIT_TEST_FRAMEWORK_LDPATH@
+BOOST_UNIT_TEST_FRAMEWORK_LIBS = @BOOST_UNIT_TEST_FRAMEWORK_LIBS@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -209,8 +230,18 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(srcdir)/TreeCode2
-plasma_freq_SOURCES = TreeCode2/examples/3d-plasma-freq/main.cpp
-all: all-am
+simulator_SOURCES = TreeCode2/Simulator.cpp
+generator_SOURCES = TreeCode2/ParticleGenerator.cpp
+treecode_tests_LDFLAGS = $(BOOST_UNIT_TEST_FRAMEWORK_LDFLAGS) 
+treecode_tests_LDADD = $(BOOST_UNIT_TEST_FRAMEWORK_LIBS)
+treecode_tests_SOURCES = TreeCode2/tests/custom_asserts.cpp \
+						 TreeCode2/tests/ParticleTest.cpp \
+						 TreeCode2/tests/TreeTest.cpp \
+						 TreeCode2/tests/IOTest.cpp \
+						 TreeCode2/tests/DistributionTest.cpp
+
+all: config.h
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
 .SUFFIXES: .cpp .lo .o .obj
@@ -248,6 +279,21 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
+
+config.h: stamp-h1
+	@if test ! -f $@; then rm -f stamp-h1; else :; fi
+	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) stamp-h1; else :; fi
+
+stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
+	@rm -f stamp-h1
+	cd $(top_builddir) && $(SHELL) ./config.status config.h
+$(srcdir)/config.h.in:  $(am__configure_deps) 
+	($(am__cd) $(top_srcdir) && $(AUTOHEADER))
+	rm -f stamp-h1
+	touch $@
+
+distclean-hdr:
+	-rm -f config.h stamp-h1
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
@@ -291,9 +337,24 @@ clean-binPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
-plasma_freq$(EXEEXT): $(plasma_freq_OBJECTS) $(plasma_freq_DEPENDENCIES) $(EXTRA_plasma_freq_DEPENDENCIES) 
-	@rm -f plasma_freq$(EXEEXT)
-	$(CXXLINK) $(plasma_freq_OBJECTS) $(plasma_freq_LDADD) $(LIBS)
+
+clean-checkPROGRAMS:
+	@list='$(check_PROGRAMS)'; test -n "$$list" || exit 0; \
+	echo " rm -f" $$list; \
+	rm -f $$list || exit $$?; \
+	test -n "$(EXEEXT)" || exit 0; \
+	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+	echo " rm -f" $$list; \
+	rm -f $$list
+generator$(EXEEXT): $(generator_OBJECTS) $(generator_DEPENDENCIES) $(EXTRA_generator_DEPENDENCIES) 
+	@rm -f generator$(EXEEXT)
+	$(CXXLINK) $(generator_OBJECTS) $(generator_LDADD) $(LIBS)
+simulator$(EXEEXT): $(simulator_OBJECTS) $(simulator_DEPENDENCIES) $(EXTRA_simulator_DEPENDENCIES) 
+	@rm -f simulator$(EXEEXT)
+	$(CXXLINK) $(simulator_OBJECTS) $(simulator_LDADD) $(LIBS)
+treecode_tests$(EXEEXT): $(treecode_tests_OBJECTS) $(treecode_tests_DEPENDENCIES) $(EXTRA_treecode_tests_DEPENDENCIES) 
+	@rm -f treecode_tests$(EXEEXT)
+	$(treecode_tests_LINK) $(treecode_tests_OBJECTS) $(treecode_tests_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -301,7 +362,13 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DistributionTest.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/IOTest.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleGenerator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleTest.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Simulator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TreeTest.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/custom_asserts.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -324,19 +391,103 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
 
-main.o: TreeCode2/examples/3d-plasma-freq/main.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT main.o -MD -MP -MF $(DEPDIR)/main.Tpo -c -o main.o `test -f 'TreeCode2/examples/3d-plasma-freq/main.cpp' || echo '$(srcdir)/'`TreeCode2/examples/3d-plasma-freq/main.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/main.Tpo $(DEPDIR)/main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/examples/3d-plasma-freq/main.cpp' object='main.o' libtool=no @AMDEPBACKSLASH@
+ParticleGenerator.o: TreeCode2/ParticleGenerator.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ParticleGenerator.o -MD -MP -MF $(DEPDIR)/ParticleGenerator.Tpo -c -o ParticleGenerator.o `test -f 'TreeCode2/ParticleGenerator.cpp' || echo '$(srcdir)/'`TreeCode2/ParticleGenerator.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ParticleGenerator.Tpo $(DEPDIR)/ParticleGenerator.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/ParticleGenerator.cpp' object='ParticleGenerator.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o main.o `test -f 'TreeCode2/examples/3d-plasma-freq/main.cpp' || echo '$(srcdir)/'`TreeCode2/examples/3d-plasma-freq/main.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ParticleGenerator.o `test -f 'TreeCode2/ParticleGenerator.cpp' || echo '$(srcdir)/'`TreeCode2/ParticleGenerator.cpp
 
-main.obj: TreeCode2/examples/3d-plasma-freq/main.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT main.obj -MD -MP -MF $(DEPDIR)/main.Tpo -c -o main.obj `if test -f 'TreeCode2/examples/3d-plasma-freq/main.cpp'; then $(CYGPATH_W) 'TreeCode2/examples/3d-plasma-freq/main.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/examples/3d-plasma-freq/main.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/main.Tpo $(DEPDIR)/main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/examples/3d-plasma-freq/main.cpp' object='main.obj' libtool=no @AMDEPBACKSLASH@
+ParticleGenerator.obj: TreeCode2/ParticleGenerator.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ParticleGenerator.obj -MD -MP -MF $(DEPDIR)/ParticleGenerator.Tpo -c -o ParticleGenerator.obj `if test -f 'TreeCode2/ParticleGenerator.cpp'; then $(CYGPATH_W) 'TreeCode2/ParticleGenerator.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/ParticleGenerator.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ParticleGenerator.Tpo $(DEPDIR)/ParticleGenerator.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/ParticleGenerator.cpp' object='ParticleGenerator.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o main.obj `if test -f 'TreeCode2/examples/3d-plasma-freq/main.cpp'; then $(CYGPATH_W) 'TreeCode2/examples/3d-plasma-freq/main.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/examples/3d-plasma-freq/main.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ParticleGenerator.obj `if test -f 'TreeCode2/ParticleGenerator.cpp'; then $(CYGPATH_W) 'TreeCode2/ParticleGenerator.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/ParticleGenerator.cpp'; fi`
+
+Simulator.o: TreeCode2/Simulator.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT Simulator.o -MD -MP -MF $(DEPDIR)/Simulator.Tpo -c -o Simulator.o `test -f 'TreeCode2/Simulator.cpp' || echo '$(srcdir)/'`TreeCode2/Simulator.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/Simulator.Tpo $(DEPDIR)/Simulator.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/Simulator.cpp' object='Simulator.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o Simulator.o `test -f 'TreeCode2/Simulator.cpp' || echo '$(srcdir)/'`TreeCode2/Simulator.cpp
+
+Simulator.obj: TreeCode2/Simulator.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT Simulator.obj -MD -MP -MF $(DEPDIR)/Simulator.Tpo -c -o Simulator.obj `if test -f 'TreeCode2/Simulator.cpp'; then $(CYGPATH_W) 'TreeCode2/Simulator.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/Simulator.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/Simulator.Tpo $(DEPDIR)/Simulator.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/Simulator.cpp' object='Simulator.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o Simulator.obj `if test -f 'TreeCode2/Simulator.cpp'; then $(CYGPATH_W) 'TreeCode2/Simulator.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/Simulator.cpp'; fi`
+
+custom_asserts.o: TreeCode2/tests/custom_asserts.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT custom_asserts.o -MD -MP -MF $(DEPDIR)/custom_asserts.Tpo -c -o custom_asserts.o `test -f 'TreeCode2/tests/custom_asserts.cpp' || echo '$(srcdir)/'`TreeCode2/tests/custom_asserts.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/custom_asserts.Tpo $(DEPDIR)/custom_asserts.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/tests/custom_asserts.cpp' object='custom_asserts.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o custom_asserts.o `test -f 'TreeCode2/tests/custom_asserts.cpp' || echo '$(srcdir)/'`TreeCode2/tests/custom_asserts.cpp
+
+custom_asserts.obj: TreeCode2/tests/custom_asserts.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT custom_asserts.obj -MD -MP -MF $(DEPDIR)/custom_asserts.Tpo -c -o custom_asserts.obj `if test -f 'TreeCode2/tests/custom_asserts.cpp'; then $(CYGPATH_W) 'TreeCode2/tests/custom_asserts.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/tests/custom_asserts.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/custom_asserts.Tpo $(DEPDIR)/custom_asserts.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/tests/custom_asserts.cpp' object='custom_asserts.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o custom_asserts.obj `if test -f 'TreeCode2/tests/custom_asserts.cpp'; then $(CYGPATH_W) 'TreeCode2/tests/custom_asserts.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/tests/custom_asserts.cpp'; fi`
+
+ParticleTest.o: TreeCode2/tests/ParticleTest.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ParticleTest.o -MD -MP -MF $(DEPDIR)/ParticleTest.Tpo -c -o ParticleTest.o `test -f 'TreeCode2/tests/ParticleTest.cpp' || echo '$(srcdir)/'`TreeCode2/tests/ParticleTest.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ParticleTest.Tpo $(DEPDIR)/ParticleTest.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/tests/ParticleTest.cpp' object='ParticleTest.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ParticleTest.o `test -f 'TreeCode2/tests/ParticleTest.cpp' || echo '$(srcdir)/'`TreeCode2/tests/ParticleTest.cpp
+
+ParticleTest.obj: TreeCode2/tests/ParticleTest.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ParticleTest.obj -MD -MP -MF $(DEPDIR)/ParticleTest.Tpo -c -o ParticleTest.obj `if test -f 'TreeCode2/tests/ParticleTest.cpp'; then $(CYGPATH_W) 'TreeCode2/tests/ParticleTest.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/tests/ParticleTest.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ParticleTest.Tpo $(DEPDIR)/ParticleTest.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/tests/ParticleTest.cpp' object='ParticleTest.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ParticleTest.obj `if test -f 'TreeCode2/tests/ParticleTest.cpp'; then $(CYGPATH_W) 'TreeCode2/tests/ParticleTest.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/tests/ParticleTest.cpp'; fi`
+
+TreeTest.o: TreeCode2/tests/TreeTest.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT TreeTest.o -MD -MP -MF $(DEPDIR)/TreeTest.Tpo -c -o TreeTest.o `test -f 'TreeCode2/tests/TreeTest.cpp' || echo '$(srcdir)/'`TreeCode2/tests/TreeTest.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/TreeTest.Tpo $(DEPDIR)/TreeTest.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/tests/TreeTest.cpp' object='TreeTest.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o TreeTest.o `test -f 'TreeCode2/tests/TreeTest.cpp' || echo '$(srcdir)/'`TreeCode2/tests/TreeTest.cpp
+
+TreeTest.obj: TreeCode2/tests/TreeTest.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT TreeTest.obj -MD -MP -MF $(DEPDIR)/TreeTest.Tpo -c -o TreeTest.obj `if test -f 'TreeCode2/tests/TreeTest.cpp'; then $(CYGPATH_W) 'TreeCode2/tests/TreeTest.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/tests/TreeTest.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/TreeTest.Tpo $(DEPDIR)/TreeTest.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/tests/TreeTest.cpp' object='TreeTest.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o TreeTest.obj `if test -f 'TreeCode2/tests/TreeTest.cpp'; then $(CYGPATH_W) 'TreeCode2/tests/TreeTest.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/tests/TreeTest.cpp'; fi`
+
+IOTest.o: TreeCode2/tests/IOTest.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT IOTest.o -MD -MP -MF $(DEPDIR)/IOTest.Tpo -c -o IOTest.o `test -f 'TreeCode2/tests/IOTest.cpp' || echo '$(srcdir)/'`TreeCode2/tests/IOTest.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/IOTest.Tpo $(DEPDIR)/IOTest.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/tests/IOTest.cpp' object='IOTest.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o IOTest.o `test -f 'TreeCode2/tests/IOTest.cpp' || echo '$(srcdir)/'`TreeCode2/tests/IOTest.cpp
+
+IOTest.obj: TreeCode2/tests/IOTest.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT IOTest.obj -MD -MP -MF $(DEPDIR)/IOTest.Tpo -c -o IOTest.obj `if test -f 'TreeCode2/tests/IOTest.cpp'; then $(CYGPATH_W) 'TreeCode2/tests/IOTest.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/tests/IOTest.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/IOTest.Tpo $(DEPDIR)/IOTest.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/tests/IOTest.cpp' object='IOTest.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o IOTest.obj `if test -f 'TreeCode2/tests/IOTest.cpp'; then $(CYGPATH_W) 'TreeCode2/tests/IOTest.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/tests/IOTest.cpp'; fi`
+
+DistributionTest.o: TreeCode2/tests/DistributionTest.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT DistributionTest.o -MD -MP -MF $(DEPDIR)/DistributionTest.Tpo -c -o DistributionTest.o `test -f 'TreeCode2/tests/DistributionTest.cpp' || echo '$(srcdir)/'`TreeCode2/tests/DistributionTest.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/DistributionTest.Tpo $(DEPDIR)/DistributionTest.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/tests/DistributionTest.cpp' object='DistributionTest.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o DistributionTest.o `test -f 'TreeCode2/tests/DistributionTest.cpp' || echo '$(srcdir)/'`TreeCode2/tests/DistributionTest.cpp
+
+DistributionTest.obj: TreeCode2/tests/DistributionTest.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT DistributionTest.obj -MD -MP -MF $(DEPDIR)/DistributionTest.Tpo -c -o DistributionTest.obj `if test -f 'TreeCode2/tests/DistributionTest.cpp'; then $(CYGPATH_W) 'TreeCode2/tests/DistributionTest.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/tests/DistributionTest.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/DistributionTest.Tpo $(DEPDIR)/DistributionTest.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TreeCode2/tests/DistributionTest.cpp' object='DistributionTest.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o DistributionTest.obj `if test -f 'TreeCode2/tests/DistributionTest.cpp'; then $(CYGPATH_W) 'TreeCode2/tests/DistributionTest.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/tests/DistributionTest.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -357,11 +508,11 @@ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	mkid -fID $$unique
 tags: TAGS
 
-TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+TAGS:  $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	set x; \
 	here=`pwd`; \
-	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
+	list='$(SOURCES) $(HEADERS) config.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -379,9 +530,9 @@ TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 	  fi; \
 	fi
 ctags: CTAGS
-CTAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+CTAGS:  $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
-	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
+	list='$(SOURCES) $(HEADERS) config.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -562,8 +713,9 @@ distcleancheck: distclean
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
 check-am: all-am
+	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
 check: check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(PROGRAMS) config.h
 installdirs:
 	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -600,14 +752,15 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
+clean-am: clean-binPROGRAMS clean-checkPROGRAMS clean-generic \
+	clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-libtool distclean-tags
+	distclean-hdr distclean-libtool distclean-tags
 
 dvi: dvi-am
 
@@ -671,24 +824,24 @@ ps-am:
 
 uninstall-am: uninstall-binPROGRAMS
 
-.MAKE: install-am install-strip
+.MAKE: all check-am install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am am--refresh check check-am clean \
-	clean-binPROGRAMS clean-generic clean-libtool ctags dist \
-	dist-all dist-bzip2 dist-gzip dist-lzip dist-lzma dist-shar \
-	dist-tarZ dist-xz dist-zip distcheck distclean \
-	distclean-compile distclean-generic distclean-libtool \
-	distclean-tags distcleancheck distdir distuninstallcheck dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-binPROGRAMS install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-binPROGRAMS
+	clean-binPROGRAMS clean-checkPROGRAMS clean-generic \
+	clean-libtool ctags dist dist-all dist-bzip2 dist-gzip \
+	dist-lzip dist-lzma dist-shar dist-tarZ dist-xz dist-zip \
+	distcheck distclean distclean-compile distclean-generic \
+	distclean-hdr distclean-libtool distclean-tags distcleancheck \
+	distdir distuninstallcheck dvi dvi-am html html-am info \
+	info-am install install-am install-binPROGRAMS install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-binPROGRAMS
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

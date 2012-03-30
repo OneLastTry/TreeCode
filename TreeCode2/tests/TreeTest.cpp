@@ -6,8 +6,6 @@
  */
 
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 #include <boost/foreach.hpp>
 #include <boost/random.hpp>
@@ -26,191 +24,218 @@
 #include <potentials/Potential.h>
 #include <macs/BarnesHutMAC.h>
 
-using namespace std;
-using namespace treecode;
-using namespace Eigen;
-using namespace treecode::distribution;
+#include "analytic.h"
+#include "custom_asserts.h"
 
 #define TOLERANCE 1E-5
 #define FORCE_TOLERANCE 0.05
 
-template<typename V, typename M>
-struct F {
-    F(){
+/**
+ * @brief Fixture for tree tests.
+ */
+template<int D>
+struct TreeFixture {
+	typedef Eigen::Matrix<double, D, 1> V;
+
+	/**
+	 * Create a list of 1000 particles, and create a tree.
+	 */
+    TreeFixture(){
     	using boost::random::mt19937;
-    	typedef Particle<V,M> Particle;
+    	using treecode::distribution::UniformDistribution;
+    	using treecode::distribution::ConstDistribution;
+    	using treecode::distribution::ConstantChargeDistribution;
+    	using treecode::Particle;
+
     	mt19937 rng;
 
     	double length = 1.0;
     	unsigned int num_particles = 1000;
 
-    	UniformDistribution<mt19937,V> 			position_dist(V::Zero(), V::Zero().array() + length);
-    	ConstDistribution<mt19937,V>			velocity_dist(V::Zero());
-    	ConstantChargeDistribution<mt19937>		electron_charges(-1);
-    	ConstantChargeDistribution<mt19937>		ion_charges(1);
+    	//Create distributions
+    	UniformDistribution<mt19937> 	position_dist(rng, V::Zero(), V::Zero().array() + length);
+    	ConstDistribution				velocity_dist(V::Zero());
+    	ConstantChargeDistribution		electron_charges(-1);
+    	ConstantChargeDistribution		ion_charges(1);
 
-    	int id = 0;
-    	vector<Particle*> ions = Particle::template generateParticles<mt19937>(num_particles, 1837, rng,
-    			position_dist, velocity_dist, ion_charges, id);
-    	vector<Particle*> electrons = Particle::template generateParticles<mt19937>(num_particles, 1, rng,
-    	    			position_dist, velocity_dist, electron_charges, id);
+    	//Generate some particles
+    	std::vector<Particle<D>*> ions = Particle<D>::template generateParticles<mt19937>(num_particles, 1837, rng,
+    			position_dist, velocity_dist, ion_charges);
+    	std::vector<Particle<D>*> electrons = Particle<D>::template generateParticles<mt19937>(num_particles, 1, rng,
+    	    			position_dist, velocity_dist, electron_charges);
     	parts.insert(parts.end(), ions.begin(), ions.end());
     	parts.insert(parts.end(), electrons.begin(), electrons.end());
     	bounds.init(parts);
-    	tree = new Tree<V,M>(bounds, parts);
+    	//Create a tree
+    	tree = new treecode::Tree<D>(bounds, parts);
     	tree->rebuild();
     }
 
-    ~F(){
+    //Get force on a single particle from tree
+    V force_on_particle(
+    		treecode::Particle<D>* p,
+    		const treecode::potentials::Potential<D>& potential,
+    		treecode::potentials::Precision precision,
+    		const treecode::AcceptanceCriterion<D>& mac
+    		) {
+    	typedef treecode::Node<D> Node;
+    	typedef std::vector<Node*> interaction_list;
+    	V force = V::Zero();
+
+    	//Build interaction list, and add force
+    	interaction_list ilist;
+    	tree->getInteractionList(*p, ilist, mac);
+    	for (typename interaction_list::iterator it = ilist.begin(); it < ilist.end(); it++) {
+    		Node* n = *it;
+    		force += potential.getForce(*p, *n, precision);
+    	}
+    	return force;
+    }
+
+    //Get potential at particle from tree
+    double potential_at_particle(
+    		treecode::Particle<D>* p,
+    		const treecode::potentials::Potential<D>& potential,
+    		treecode::potentials::Precision precision,
+    		const treecode::AcceptanceCriterion<D>& mac
+    		) {
+    	typedef treecode::Node<D> Node;
+    	typedef std::vector<Node*> interaction_list;
+    	double pot = 0;
+
+    	//Build interaction list and get potential
+    	interaction_list ilist;
+    	tree->getInteractionList(*p, ilist, mac);
+    	for (typename interaction_list::iterator it = ilist.begin(); it < ilist.end(); it++) {
+    		Node* n = *it;
+    		pot += potential.getPotential(*p, *n, precision);
+    	}
+    	return pot;
+    }
+
+    ~TreeFixture(){
+    	treecode::Particle<D>::deleteParticles(parts);
     	delete tree;
     }
 
-    OpenBoundary<V,M> bounds;
-    Tree<V,M> *tree;
-    std::vector<Particle<V,M>* > parts;
+    treecode::OpenBoundary<D> bounds;
+    treecode::Tree<D> *tree;
+    std::vector<treecode::Particle<D>* > parts;
+
+    //Analytic results
+    treecode::tests::AnalyticResults<D> anal;
 };
 
-template<typename V, typename M>
-V analytic_dipole_moment(const vector<Particle<V,M>*>& parts, const V& origin){
-	typedef Particle<V,M> Particle;
-	V dp_moments = V::Zero();
-	BOOST_FOREACH(Particle *p, parts){
-		dp_moments += p->getCharge() * (p->getPosition() - origin);
-	}
-	return dp_moments;
-}
 
-template<typename V, typename M>
-M analytic_quadrupole_moment(const vector<Particle<V,M>*> parts, const V& origin){
-	typedef Particle<V,M> Particle;
-	M qm = M::Zero();
-	BOOST_FOREACH(Particle *p, parts){
-		V disp_vec = p->getPosition() - origin;
-		qm += (disp_vec * disp_vec.transpose()) * p->getCharge();
-	}
-	return qm;
-}
-
-template<typename V, typename M>
-V analytic_centre_of_charge(const vector<Particle<V,M>*> parts, int& charge, int& abs_charge){
-	charge = 0;
-	abs_charge = 0;
-	V coc = V::Zero();
-	typedef Particle<V,M> Particle;
-	BOOST_FOREACH(Particle* p, parts){
-		coc += abs(p->getCharge()) * p->getPosition();
-		charge += p->getCharge();
-		abs_charge += abs(p->getCharge());
-	}
-	coc /= abs_charge;
-	return coc;
-}
-template<typename V, typename M>
-V analytic_force(const Particle<V,M>& test_part, const vector<Particle<V,M>*> parts){
-	V force = V::Zero();
-	typedef Particle<V,M> Particle;
-	BOOST_FOREACH(Particle* p, parts){
-		if(p == &test_part)
-			continue;
-		V r = (test_part.getPosition() - p->getPosition());
-		force += p->getCharge() * r / r.squaredNorm() / r.norm();
-	}
-	return force;
-}
-template<typename V, typename M>
-double analytic_potential(const Particle<V,M>& test_part, const vector<Particle<V,M>*> parts){
-	double potential = 0;
-	typedef Particle<V,M> Particle;
-	BOOST_FOREACH(Particle* p, parts){
-		if(p == &test_part)
-			continue;
-		V r = (test_part.getPosition() - p->getPosition());
-		potential += p->getCharge() / r.norm();
-	}
-	return potential;
-}
-
-template<typename V, typename M>
-V force_on_particle(
-		Particle<V,M>* p,
-		const Tree<V,M>& tree,
-		const potentials::Potential<V, M>& potential,
-		potentials::Precision precision,
-		const AcceptanceCriterion<V, M>& mac
-		) {
-	typedef Node<V, M> Node;
-	typedef std::vector<Node*> interaction_list;
-	V force = V::Zero();
-
-	interaction_list ilist;
-	tree.getInteractionList(*p, ilist, mac);
-	for (typename interaction_list::iterator it = ilist.begin(); it < ilist.end(); it++) {
-		Node* n = *it;
-		force += potential.getForce(*p, *n, precision);
-	}
-	return force;
-}
-
-template<typename V, typename M>
-double potenital_at_particle(
-		Particle<V,M>* p,
-		const Tree<V,M>& tree,
-		const potentials::Potential<V, M>& potential,
-		potentials::Precision precision,
-		const AcceptanceCriterion<V, M>& mac
-		) {
-	typedef Node<V, M> Node;
-	typedef std::vector<Node*> interaction_list;
-	double pot = 0;
-
-	interaction_list ilist;
-	tree.getInteractionList(*p, ilist, mac);
-	for (typename interaction_list::iterator it = ilist.begin(); it < ilist.end(); it++) {
-		Node* n = *it;
-		pot += potential.getPotential(*p, *n, precision);
-	}
-	return pot;
-}
 
 typedef Eigen::Vector2d V2d;
 typedef Eigen::Matrix2d M2d;
-typedef F<V2d, M2d> Fixture2d;
-BOOST_FIXTURE_TEST_SUITE(Moments, Fixture2d)
+BOOST_FIXTURE_TEST_SUITE(Moments2d, TreeFixture<2>)
 
+//Compare analytic coc, dipole and quadrupole moments.
 BOOST_AUTO_TEST_CASE(TwoDMoments){
-	const Node<V2d, M2d>& root = tree->getRoot();
+	const treecode::Node<2>& root = tree->getRoot();
 	int total_charge, modulus_charge;
-	V2d anal_coc  = analytic_centre_of_charge<V2d,M2d>(parts, total_charge, modulus_charge);
-	V2d anal_dip  = analytic_dipole_moment<V2d,M2d>(parts, root.getCentreOfCharge());
-	M2d anal_quad = analytic_quadrupole_moment<V2d,M2d>(parts, root.getCentreOfCharge());
+	V2d anal_coc  = anal.analytic_centre_of_charge(parts, total_charge, modulus_charge);
+	V2d anal_dip  = anal.analytic_dipole_moment(parts, root.getCentreOfCharge());
+	M2d anal_quad = anal.analytic_quadrupole_moment(parts, root.getCentreOfCharge());
 
-	for(unsigned int i=0;i<anal_coc.rows();i++)
-		BOOST_CHECK_CLOSE(anal_coc[i], root.getCentreOfCharge()[i], TOLERANCE);
-	for(unsigned int i=0;i<anal_dip.rows();i++)
-		BOOST_CHECK_CLOSE(anal_dip[i], root.getDipoleMoments()[i], TOLERANCE);
-	for(unsigned int i=0;i<anal_quad.rows();i++)
-		for(unsigned int j=0;j<anal_quad.cols();j++)
-			BOOST_CHECK_CLOSE(anal_quad.coeff(i,j), root.getQuadrupoleMoments().coeff(i,j), TOLERANCE);
+	EIGEN_REQUIRE_CLOSE(anal_coc, root.getCentreOfCharge(), TOLERANCE);
+	EIGEN_REQUIRE_CLOSE(anal_dip, root.getDipoleMoments(), TOLERANCE);
+	EIGEN_REQUIRE_CLOSE(anal_quad, root.getQuadrupoleMoments(), TOLERANCE);
 }
 
+//Compare analytic forces, and check forces from tree
 BOOST_AUTO_TEST_CASE(TwoDForces){
-	using namespace potentials;
-	CoulombForceThreeD<V2d,M2d> pot(0.0, bounds);
-	BarnesHutMAC<V2d,M2d> mac(0.0, bounds);
-	Particle<V2d,M2d>* part = parts.front();
+	treecode::potentials::CoulombForceThreeD<2> pot(0.0, bounds);
+	treecode::BarnesHutMAC<2> mac(0.0, bounds);
+	treecode::Particle<2>* part = parts.front();
 
-	V2d tree_force = force_on_particle<V2d,M2d>(part, *tree, pot, quadrupole, mac);
-	V2d anal_force = analytic_force<V2d,M2d>(*part, parts);
-	double tree_pot = potenital_at_particle<V2d,M2d>(part, *tree, pot, quadrupole, mac);
-	double anal_pot = analytic_potential<V2d,M2d>(*part, parts);
+	V2d tree_force = force_on_particle(part, pot, treecode::potentials::quadrupole, mac);
+	V2d anal_force = anal.analytic_force(*part, parts);
+	double tree_pot = potential_at_particle(part, pot, treecode::potentials::quadrupole, mac);
+	double anal_pot = anal.analytic_potential(*part, parts);
 
 	//Should be identical with theta = 0
-	for(unsigned int i=0;i< tree_force.rows();i++)
-		BOOST_CHECK_CLOSE(anal_force[i], tree_force[i], TOLERANCE);
-	BOOST_CHECK_CLOSE(tree_pot, anal_pot, TOLERANCE);
+	EIGEN_REQUIRE_CLOSE(anal_force, tree_force, TOLERANCE);
+	BOOST_REQUIRE_CLOSE(tree_pot, anal_pot, TOLERANCE);
 
 	//Now try with theta = 0.5
+	mac.setTheta(0.5);
+	V2d mp_force = force_on_particle(part, pot, treecode::potentials::monopole, mac);
+	double mp_pot = potential_at_particle(part, pot, treecode::potentials::monopole, mac);
 
+	V2d dp_force = force_on_particle(part, pot, treecode::potentials::dipole, mac);
+	double dp_pot = potential_at_particle(part, pot, treecode::potentials::dipole, mac);
+
+	V2d qp_force = force_on_particle(part, pot, treecode::potentials::quadrupole, mac);
+	double qp_pot = potential_at_particle(part, pot, treecode::potentials::quadrupole, mac);
+
+	BOOST_TEST_MESSAGE("Is the following error acceptable? (theta = 0.5)");
+	BOOST_TEST_MESSAGE("Analytic force:   (" << anal_force[0] << ", " << anal_force[1] << ")");
+	BOOST_TEST_MESSAGE("Monopole force:   (" << mp_force[0] << ", " << mp_force[1] << ")");
+	BOOST_TEST_MESSAGE("Dipole force:     (" << dp_force[0] << ", " << dp_force[1] << ")");
+	BOOST_TEST_MESSAGE("Quadrupole force: (" << qp_force[0] << ", " << qp_force[1] << ")");
+	BOOST_TEST_MESSAGE("Analytic potential:   " << anal_pot);
+	BOOST_TEST_MESSAGE("Monopole potential:   " << mp_pot);
+	BOOST_TEST_MESSAGE("Dipole potential:     " << dp_pot);
+	BOOST_TEST_MESSAGE("Quadrupole potential: " << qp_pot);
+}
+
+BOOST_AUTO_TEST_SUITE_END();
+
+BOOST_FIXTURE_TEST_SUITE(Moments3d, TreeFixture<3>)
+
+typedef Eigen::Vector3d V3d;
+typedef Eigen::Matrix3d M3d;
+//Compare analytic coc, dipole and quadrupole moments.
+BOOST_AUTO_TEST_CASE(ThreeDMoments){
+	const treecode::Node<3>& root = tree->getRoot();
+	int total_charge, modulus_charge;
+	V3d anal_coc  = anal.analytic_centre_of_charge(parts, total_charge, modulus_charge);
+	V3d anal_dip  = anal.analytic_dipole_moment(parts, root.getCentreOfCharge());
+	M3d anal_quad = anal.analytic_quadrupole_moment(parts, root.getCentreOfCharge());
+
+	EIGEN_REQUIRE_CLOSE(anal_coc, root.getCentreOfCharge(), TOLERANCE);
+	EIGEN_REQUIRE_CLOSE(anal_dip, root.getDipoleMoments(), TOLERANCE);
+	EIGEN_REQUIRE_CLOSE(anal_quad, root.getQuadrupoleMoments(), TOLERANCE);
+}
+
+//Compare analytic forces, and check forces from tree
+BOOST_AUTO_TEST_CASE(ThreeDForces){
+	treecode::potentials::CoulombForceThreeD<3> pot(0.0, bounds);
+	treecode::BarnesHutMAC<3> mac(0.0, bounds);
+	treecode::Particle<3>* part = parts.front();
+
+	V3d tree_force = force_on_particle(part, pot, treecode::potentials::quadrupole, mac);
+	V3d anal_force = anal.analytic_force(*part, parts);
+	double tree_pot = potential_at_particle(part, pot, treecode::potentials::quadrupole, mac);
+	double anal_pot = anal.analytic_potential(*part, parts);
+
+	//Should be identical with theta = 0
+	EIGEN_REQUIRE_CLOSE(anal_force, tree_force, TOLERANCE);
+	BOOST_REQUIRE_CLOSE(tree_pot, anal_pot, TOLERANCE);
+
+	//Now try with theta = 0.5
+	mac.setTheta(0.5);
+	V3d mp_force = force_on_particle(part, pot, treecode::potentials::monopole, mac);
+	double mp_pot = potential_at_particle(part, pot, treecode::potentials::monopole, mac);
+
+	V3d dp_force = force_on_particle(part, pot, treecode::potentials::dipole, mac);
+	double dp_pot = potential_at_particle(part, pot, treecode::potentials::dipole, mac);
+
+	V3d qp_force = force_on_particle(part, pot, treecode::potentials::quadrupole, mac);
+	double qp_pot = potential_at_particle(part, pot, treecode::potentials::quadrupole, mac);
+
+	BOOST_TEST_MESSAGE("Is the following error acceptable? (theta = 0.5)");
+	BOOST_TEST_MESSAGE("Analytic force:   (" << anal_force[0] << ", " << anal_force[1] << ", " << anal_force[2]<< ")");
+	BOOST_TEST_MESSAGE("Monopole force:   (" << mp_force[0] << ", " << mp_force[1] << ", " << mp_force[2] << ")");
+	BOOST_TEST_MESSAGE("Dipole force:     (" << dp_force[0] << ", " << dp_force[1] << ", " << dp_force[2]<< ")");
+	BOOST_TEST_MESSAGE("Quadrupole force: (" << qp_force[0] << ", " << qp_force[1] << ", " << qp_force[2] << ")");
+	BOOST_TEST_MESSAGE("Analytic potential:   " << anal_pot);
+	BOOST_TEST_MESSAGE("Monopole potential:   " << mp_pot);
+	BOOST_TEST_MESSAGE("Dipole potential:     " << dp_pot);
+	BOOST_TEST_MESSAGE("Quadrupole potential: " << qp_pot);
 }
 
 BOOST_AUTO_TEST_SUITE_END();

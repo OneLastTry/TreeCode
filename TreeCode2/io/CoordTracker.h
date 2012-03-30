@@ -41,10 +41,10 @@ public:
 		BOOST_FOREACH(part_t* p, parent::parts_){
 			if(record_ == POSITION){
 				for(unsigned int i = 0; i < p->getPosition().rows();i++)
-					(*(parent::out_)) << p->getPosition()[i] << "\t";
+					(*(parent::out_)) << std::scientific << p->getPosition()[i] << "\t";
 			}else if(record_ == VELOCITY){
 				for(unsigned int i = 0; i < p->getVelocity().rows();i++)
-					(*(parent::out_)) << p->getVelocity()[i] << "\t";
+					(*(parent::out_)) << std::scientific << p->getVelocity()[i] << "\t";
 			}
 		}
 		(*(parent::out_)) << std::endl;
