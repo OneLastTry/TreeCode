@@ -21,11 +21,13 @@ AC_PROG_LIBTOOL
 # Checks for header files.
 AC_CHECK_HEADERS([cstdlib cmath])
 BOOST_REQUIRE([1.49])
-# We also want boost test
+# We also want boost test, and program options
 BOOST_TEST
+BOOST_PROGRAM_OPTIONS
 
 #Read eigen dir from command line if supplied
 AC_ARG_WITH([eigen-dir],
+		#AS_HELP_STRING is just a pretty formatter
         AS_HELP_STRING([--with-eigen-dir=EIGEN_DIR],
         [Force location of Eigen]),
         [

@@ -17,7 +17,7 @@
 #include "bounds/BoundaryConditions.h"
 #include "pushers/pusher.h"
 #include "potentials/Potential.h"
-#include "output/ParticleTracker.h"
+#include "io/ParticleTracker.h"
 
 namespace treecode {
 
@@ -72,7 +72,7 @@ public:
 			std::pair<double, double> energies = pusher_.push_particles(particles_, tree_, bounds_, precision, mac_);
 			bounds_.timestepOver();
 
-			std::cout << "Timestep " << i << " of " << num_steps << " complete (" << ((float)i/(float)num_steps)*100 << "%)" << std::endl;
+			std::cout << "\rTimestep " << i << " of " << num_steps << " complete (" << ((float)i/(float)num_steps)*100 << "%)";
 			if( (i%output_every) == 0){
 				if(energies_out_ != NULL)
 					(*energies_out_) << (i * dt_) << "\t" << energies.first << "\t" << energies.second << std::endl;
@@ -82,6 +82,7 @@ public:
 					t->output();
 			}
 		}
+		std::cout << std::endl;
 	}
 
 	/**

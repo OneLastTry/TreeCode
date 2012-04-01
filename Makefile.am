@@ -3,6 +3,10 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(srcdir)/TreeCode2
 
 bin_PROGRAMS = simulator generator
 simulator_SOURCES = TreeCode2/Simulator.cpp
+simulator_LDADD   = $(BOOST_PROGRAM_OPTIONS_LIBS)
+simulator_LDFLAGS = $(BOOST_PROGRAM_OPTIONS_LDFLAGS)
+generator_LDADD   = $(BOOST_PROGRAM_OPTIONS_LIBS)
+generator_LDFLAGS = $(BOOST_PROGRAM_OPTIONS_LDFLAGS)
 generator_SOURCES = TreeCode2/ParticleGenerator.cpp
 
 check_PROGRAMS = treecode_tests

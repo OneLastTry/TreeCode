@@ -58,15 +58,21 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_generator_OBJECTS = ParticleGenerator.$(OBJEXT)
 generator_OBJECTS = $(am_generator_OBJECTS)
-generator_LDADD = $(LDADD)
+am__DEPENDENCIES_1 =
+generator_DEPENDENCIES = $(am__DEPENDENCIES_1)
+generator_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(generator_LDFLAGS) $(LDFLAGS) -o $@
 am_simulator_OBJECTS = Simulator.$(OBJEXT)
 simulator_OBJECTS = $(am_simulator_OBJECTS)
-simulator_LDADD = $(LDADD)
+simulator_DEPENDENCIES = $(am__DEPENDENCIES_1)
+simulator_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(simulator_LDFLAGS) $(LDFLAGS) -o $@
 am_treecode_tests_OBJECTS = custom_asserts.$(OBJEXT) \
 	ParticleTest.$(OBJEXT) TreeTest.$(OBJEXT) IOTest.$(OBJEXT) \
 	DistributionTest.$(OBJEXT)
 treecode_tests_OBJECTS = $(am_treecode_tests_OBJECTS)
-am__DEPENDENCIES_1 =
 treecode_tests_DEPENDENCIES = $(am__DEPENDENCIES_1)
 treecode_tests_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -114,6 +120,9 @@ AUTOMAKE = ${SHELL} /home/stefans/git/missing --run automake-1.11
 AWK = gawk
 BOOST_CPPFLAGS = 
 BOOST_LDPATH = /usr/local/lib
+BOOST_PROGRAM_OPTIONS_LDFLAGS = -L/usr/local/lib -Wl,-R/usr/local/lib
+BOOST_PROGRAM_OPTIONS_LDPATH = /usr/local/lib
+BOOST_PROGRAM_OPTIONS_LIBS = -lboost_program_options
 BOOST_ROOT = 
 BOOST_UNIT_TEST_FRAMEWORK_LDFLAGS = -L/usr/local/lib -Wl,-R/usr/local/lib
 BOOST_UNIT_TEST_FRAMEWORK_LDPATH = /usr/local/lib
@@ -122,11 +131,11 @@ CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
 CPP = gcc -E
-CPPFLAGS =  -I/usr/include/eigen3/
+CPPFLAGS = -fopenmp -O3 -I/usr/include/eigen3/
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -g -O2
+CXXFLAGS = -O3 -fopenmp -ffast-math
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -231,6 +240,10 @@ top_srcdir = .
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(srcdir)/TreeCode2
 simulator_SOURCES = TreeCode2/Simulator.cpp
+simulator_LDADD = $(BOOST_PROGRAM_OPTIONS_LIBS)
+simulator_LDFLAGS = $(BOOST_PROGRAM_OPTIONS_LDFLAGS)
+generator_LDADD = $(BOOST_PROGRAM_OPTIONS_LIBS)
+generator_LDFLAGS = $(BOOST_PROGRAM_OPTIONS_LDFLAGS)
 generator_SOURCES = TreeCode2/ParticleGenerator.cpp
 treecode_tests_LDFLAGS = $(BOOST_UNIT_TEST_FRAMEWORK_LDFLAGS) 
 treecode_tests_LDADD = $(BOOST_UNIT_TEST_FRAMEWORK_LIBS)
@@ -348,10 +361,10 @@ clean-checkPROGRAMS:
 	rm -f $$list
 generator$(EXEEXT): $(generator_OBJECTS) $(generator_DEPENDENCIES) $(EXTRA_generator_DEPENDENCIES) 
 	@rm -f generator$(EXEEXT)
-	$(CXXLINK) $(generator_OBJECTS) $(generator_LDADD) $(LIBS)
+	$(generator_LINK) $(generator_OBJECTS) $(generator_LDADD) $(LIBS)
 simulator$(EXEEXT): $(simulator_OBJECTS) $(simulator_DEPENDENCIES) $(EXTRA_simulator_DEPENDENCIES) 
 	@rm -f simulator$(EXEEXT)
-	$(CXXLINK) $(simulator_OBJECTS) $(simulator_LDADD) $(LIBS)
+	$(simulator_LINK) $(simulator_OBJECTS) $(simulator_LDADD) $(LIBS)
 treecode_tests$(EXEEXT): $(treecode_tests_OBJECTS) $(treecode_tests_DEPENDENCIES) $(EXTRA_treecode_tests_DEPENDENCIES) 
 	@rm -f treecode_tests$(EXEEXT)
 	$(treecode_tests_LINK) $(treecode_tests_OBJECTS) $(treecode_tests_LDADD) $(LIBS)
