@@ -60,10 +60,11 @@ public:
 
 		//Rebuild the tree, to get the right nodes.
 		tree.rebuild();
-		//Create interaction list
-		interaction_list ilist;
 		//Loop over all particles, get ilist and then push particle.
-		BOOST_FOREACH(part_t* p, parts){
+#pragma omp parallel for schedule(dynamic)
+		for(int i=0;i<parts.size();i++){
+			interaction_list ilist;
+			part_t* p = parts[i];
 			tree.getInteractionList(*p, ilist, mac);
 			for(typename interaction_list::iterator it = ilist.begin(); it < ilist.end(); it++){
 				Node* n = *it;
