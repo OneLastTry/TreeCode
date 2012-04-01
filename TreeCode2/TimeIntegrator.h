@@ -108,6 +108,11 @@ public:
 		particle_trackers_.push_back(tracker);
 	}
 
+	template<class InputIterator>
+	void addParticleTrackers(InputIterator begin, InputIterator end){
+		particle_trackers_.insert(particle_trackers_.end(), begin, end);
+	}
+
 private:
 	double dt_, max_time_;
 	BoundaryConditions<D>& bounds_;

@@ -41,21 +41,16 @@ public:
 	 * @param charge	Charge of all particles to be instantiated.
 	 * @param timestep  Timestep to read.
 	 */
-	ParticleReader(const char *pos_file, const char *vel_file, double mass, int charge):
+	ParticleReader(std::string pos_file, std::string vel_file, double mass, int charge):
 		pos_input_(NULL), vel_input_(NULL), mass_(mass), charge_(charge){
 
-		if(pos_file == NULL)
-			throw ReadError("Must specify a position file.");
+		pos_input_ = new std::ifstream(pos_file.c_str());
+		vel_input_ = new std::ifstream(vel_file.c_str());
 
-		pos_input_ = new std::ifstream(pos_file);
 		if(pos_input_->fail())
 			throw ReadError("Failed to open position file.");
-
-		if(vel_file != NULL){
-			vel_input_ = new std::ifstream(vel_file);
-			if(vel_input_->fail())
-				throw ReadError("Failed to open velocity file.");
-		}
+		if(vel_input_->fail())
+			throw ReadError("Failed to open velocity file.");
 	}
 
 	~ParticleReader(){
@@ -77,62 +72,40 @@ public:
 	 * @param timestep Timestep to examine
 	 * @return Vector of Particle%s.
 	 */
-	template<class OutputIterator>
-	void readParticles(OutputIterator in, int timestep = 0){
-		//Read at least timestep_ newlines. If we reach the end of the file,
-		//throw an exception.
-		int timesteps = 0;
-		while(timesteps < timestep && !pos_input_->eof()){
-			int c = pos_input_->get();
-			if(c == '\n')
-				timesteps ++;
-		}
-		if(pos_input_->eof())
-			throw ReadError("Reached end of position file before reading the correct number of timesteps.");
-		//Now do the same for the velocity file, if it exists
-		if(vel_input_ != NULL){
-			timesteps = 0;
-			while(timesteps < timestep && !vel_input_->eof()){
-				int c = vel_input_->get();
-				if(c == '\n')
-					timesteps ++;
-			}
-			if(pos_input_->eof())
-				throw ReadError("Reached end of velocity file before reading the correct number of timesteps.");
+	std::vector<Particle<D>* > readParticles(int timestep_offset = 0){
+		std::vector<Particle<D>* > parts;
+
+		//Skip timestep_offset lines
+		while(timestep_offset-- > 0 && !pos_input_->eof() && !vel_input_->eof()){
+			pos_input_->ignore(10000000, '\n');
+			pos_input_->unget();
+			vel_input_->ignore(10000000, '\n');
+			vel_input_->unget();
+			if(pos_input_->get() == '\n' &&  vel_input_->get() == '\n')
+				timestep_offset--;
 		}
 
-		Vec position = Vec::Zero();
-		Vec velocity = Vec::Zero();
-		int index = 0;	//When this reaches D, create a particle
-		//Read D components, then create and add a particle
-		while((*pos_input_) >> position[index]){
+		//Read entire line into string
+		std::string pos_line, vel_line;
+		std::getline(*pos_input_, pos_line);
+		std::getline(*vel_input_, vel_line);
+		//Create stringstreams
+		std::stringstream pos_ss(pos_line);
+		std::stringstream vel_ss(vel_line);
 
-			//read in the velocity as well, if the file is specified
-			if(vel_input_ != NULL){
-				(*vel_input_) >> velocity[index];
-				//If we have reached the end of the velocity file, throw
-				//an exception, because it indicates there is the wrong
-				//number of fields
-				if(vel_input_->eof())
-					throw ReadError("Reached end of file in velocities before positions.");
-			}
+		//Read into vectors, create new particle
+		Vec pos, vel;
+		int index = 0;
+		while(pos_ss >> pos[index] && vel_ss >> vel[index]){
 			index = (index + 1) % D;
-			if(index == 0){
-				Particle<D> *p = new Particle<D>(charge_, mass_, position, velocity);
-				//parts.push_back(p);
-				in = p;
-			}
-			//If we have read the complete timestep, break.
-			if(pos_input_->get() == '\n'){
-				//We should also make sure that we are at the end of
-				//the velocities file, to make sure they have
-				//an equal number of fields.
-				if(vel_input_ != NULL && vel_input_->get() != '\n')
-					throw ReadError("Reached end of line in velocity file at different time to position file.");
-				//We're done reading the line.
-				break;
-			}
+			if(index == 0)
+				parts.push_back(new treecode::Particle<D>(charge_, mass_, pos, vel));
 		}
+		return parts;
+	}
+
+	bool eof(){
+		return pos_input_->eof() || vel_input_->eof();
 	}
 
 private:

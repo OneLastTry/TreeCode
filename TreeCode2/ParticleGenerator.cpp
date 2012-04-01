@@ -42,7 +42,6 @@ int main(int argc, char **argv) {
 	//Main variables. These don't depend on anything else, and are mandatory
 	po::options_description main_opts("Main options");
 	main_opts.add_options()
-	    ("help,h", "produce help message")
 	    ("num-particles,N", po::value<int>(&num_particles)->required(), "Number of particles")
 	    ("origin,O", 		po::value<Eigen::VectorXd>(&origin_vector)->required(), "Origin of system")
 	    ("length,L", 		po::value<double>(&length)->required(), "Length of system")

@@ -34,7 +34,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = x86_64-unknown-linux-gnu
 host_triplet = x86_64-unknown-linux-gnu
-bin_PROGRAMS = simulator$(EXEEXT) generator$(EXEEXT)
+bin_PROGRAMS = simulator$(EXEEXT) generator$(EXEEXT) analyser$(EXEEXT)
 check_PROGRAMS = treecode_tests$(EXEEXT)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(srcdir)/Makefile.am \
@@ -56,9 +56,15 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
+am_analyser_OBJECTS = Analyser.$(OBJEXT)
+analyser_OBJECTS = $(am_analyser_OBJECTS)
+am__DEPENDENCIES_1 =
+analyser_DEPENDENCIES = $(am__DEPENDENCIES_1)
+analyser_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(analyser_LDFLAGS) $(LDFLAGS) -o $@
 am_generator_OBJECTS = ParticleGenerator.$(OBJEXT)
 generator_OBJECTS = $(am_generator_OBJECTS)
-am__DEPENDENCIES_1 =
 generator_DEPENDENCIES = $(am__DEPENDENCIES_1)
 generator_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -90,10 +96,10 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(generator_SOURCES) $(simulator_SOURCES) \
-	$(treecode_tests_SOURCES)
-DIST_SOURCES = $(generator_SOURCES) $(simulator_SOURCES) \
-	$(treecode_tests_SOURCES)
+SOURCES = $(analyser_SOURCES) $(generator_SOURCES) \
+	$(simulator_SOURCES) $(treecode_tests_SOURCES)
+DIST_SOURCES = $(analyser_SOURCES) $(generator_SOURCES) \
+	$(simulator_SOURCES) $(treecode_tests_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -242,9 +248,12 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(srcdir)/TreeCode2
 simulator_SOURCES = TreeCode2/Simulator.cpp
 simulator_LDADD = $(BOOST_PROGRAM_OPTIONS_LIBS)
 simulator_LDFLAGS = $(BOOST_PROGRAM_OPTIONS_LDFLAGS)
+generator_SOURCES = TreeCode2/ParticleGenerator.cpp
 generator_LDADD = $(BOOST_PROGRAM_OPTIONS_LIBS)
 generator_LDFLAGS = $(BOOST_PROGRAM_OPTIONS_LDFLAGS)
-generator_SOURCES = TreeCode2/ParticleGenerator.cpp
+analyser_SOURCES = TreeCode2/Analyser.cpp
+analyser_LDADD = $(BOOST_PROGRAM_OPTIONS_LIBS)
+analyser_LDFLAGS = $(BOOST_PROGRAM_OPTIONS_LDFLAGS)
 treecode_tests_LDFLAGS = $(BOOST_UNIT_TEST_FRAMEWORK_LDFLAGS) 
 treecode_tests_LDADD = $(BOOST_UNIT_TEST_FRAMEWORK_LIBS)
 treecode_tests_SOURCES = TreeCode2/tests/custom_asserts.cpp \
@@ -359,6 +368,9 @@ clean-checkPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+analyser$(EXEEXT): $(analyser_OBJECTS) $(analyser_DEPENDENCIES) $(EXTRA_analyser_DEPENDENCIES) 
+	@rm -f analyser$(EXEEXT)
+	$(analyser_LINK) $(analyser_OBJECTS) $(analyser_LDADD) $(LIBS)
 generator$(EXEEXT): $(generator_OBJECTS) $(generator_DEPENDENCIES) $(EXTRA_generator_DEPENDENCIES) 
 	@rm -f generator$(EXEEXT)
 	$(generator_LINK) $(generator_OBJECTS) $(generator_LDADD) $(LIBS)
@@ -375,6 +387,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+include ./$(DEPDIR)/Analyser.Po
 include ./$(DEPDIR)/DistributionTest.Po
 include ./$(DEPDIR)/IOTest.Po
 include ./$(DEPDIR)/ParticleGenerator.Po
@@ -403,6 +416,20 @@ include ./$(DEPDIR)/custom_asserts.Po
 #	source='$<' object='$@' libtool=yes \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
 #	$(LTCXXCOMPILE) -c -o $@ $<
+
+Analyser.o: TreeCode2/Analyser.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT Analyser.o -MD -MP -MF $(DEPDIR)/Analyser.Tpo -c -o Analyser.o `test -f 'TreeCode2/Analyser.cpp' || echo '$(srcdir)/'`TreeCode2/Analyser.cpp
+	$(am__mv) $(DEPDIR)/Analyser.Tpo $(DEPDIR)/Analyser.Po
+#	source='TreeCode2/Analyser.cpp' object='Analyser.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o Analyser.o `test -f 'TreeCode2/Analyser.cpp' || echo '$(srcdir)/'`TreeCode2/Analyser.cpp
+
+Analyser.obj: TreeCode2/Analyser.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT Analyser.obj -MD -MP -MF $(DEPDIR)/Analyser.Tpo -c -o Analyser.obj `if test -f 'TreeCode2/Analyser.cpp'; then $(CYGPATH_W) 'TreeCode2/Analyser.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/Analyser.cpp'; fi`
+	$(am__mv) $(DEPDIR)/Analyser.Tpo $(DEPDIR)/Analyser.Po
+#	source='TreeCode2/Analyser.cpp' object='Analyser.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o Analyser.obj `if test -f 'TreeCode2/Analyser.cpp'; then $(CYGPATH_W) 'TreeCode2/Analyser.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/Analyser.cpp'; fi`
 
 ParticleGenerator.o: TreeCode2/ParticleGenerator.cpp
 	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ParticleGenerator.o -MD -MP -MF $(DEPDIR)/ParticleGenerator.Tpo -c -o ParticleGenerator.o `test -f 'TreeCode2/ParticleGenerator.cpp' || echo '$(srcdir)/'`TreeCode2/ParticleGenerator.cpp

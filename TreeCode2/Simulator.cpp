@@ -65,50 +65,86 @@ typedef std::vector<int>	intlist;
  * @param max_time
  * @param force_softening
  */
-void output_common_params(double theta, double dt, double max_time, double force_softening){
+void output_common_params(double theta, double dt, double max_time, double force_softening, const std::string& energy){
 	std::cout << std::left << std::setw(20) << "Theta:" << theta << std::endl;
 	std::cout << std::left << std::setw(20) << "Timestep:" << dt << std::endl;
 	std::cout << std::left << std::setw(20) << "Max time:" << max_time << std::endl;
 	std::cout << std::left << std::setw(20) << "Force softening:" << force_softening << std::endl;
+	std::cout << std::left << std::setw(20) << "Energy file:" << energy << std::endl;
 }
 
-template<class OutputIterator>
-void read_particles_3d(const OptionParser& opts, OutputIterator it){
+/**
+ * @brief Read input files and bind output files.
+ * @param opts	Options
+ * @param part_it		Particles will be added to this.
+ * @param tracker_it	Particle trackers will be added to this.
+ */
+typedef std::vector<treecode::Particle<3>* > part_list_3d;
+typedef std::vector<treecode::output::CoordTracker<3>* > tracker_list_3d;
+void read_particles_3d(const OptionParser& opts, part_list_3d& parts, tracker_list_3d& trackers){
+	using treecode::output::CoordTracker;
+
 	//Get the file lists, charges and masses
 	stringlist pos_files = opts.get<stringlist>("pos-files");
 	stringlist vel_files = opts.get<stringlist>("vel-files");
 	doublelist masses = opts.get<doublelist>("masses");
 	intlist charges = opts.get<intlist>("charges");
+	//List of output files
+	stringlist pos_out = opts.get<stringlist>("pos-out");
+	stringlist vel_out = opts.get<stringlist>("vel-out");
 
 	//Check vectors are all the same size
 	int len = pos_files.size();
-	if(vel_files.size() != len || masses.size() != len || charges.size() != len){
+	if(vel_files.size() != len
+			|| masses.size() != len
+			|| charges.size() != len
+			|| pos_out.size() != len
+			|| vel_out.size() != len){
 		std::cerr << "Must supply the same number of position files, velocity files, charges and masses." << std::endl;
 		exit(1);
 	}
 
 	//Loop over each input file, generating particles
-	std::vector<treecode::Particle<3>* > parts;
 	for(int i=0;i<len;i++){
-		treecode::io::ParticleReader<3> preader(pos_files[i].c_str(), vel_files[i].c_str(), masses[i], charges[i]);
-		preader.readParticles(it);
+		treecode::io::ParticleReader<3> preader(pos_files[i], vel_files[i], masses[i], charges[i]);
+		//Read the particles in that file
+		part_list_3d current_parts = preader.readParticles();
+		//Add them to the list of all particles
+		parts.insert(parts.end(), current_parts.begin(), current_parts.end());
+		if(opts.count("verbose")){
+			std::cout << "Read " << current_parts.size() << " particles with m="
+			<< masses[i] << ", q="
+			<< charges[i] << " from "
+			<< pos_files[i] << " and "
+			<< vel_files[i] << std::endl;
+		}
+
+		//Bind them to a CoordTracker
+		if(pos_out[i] != "none")
+			trackers.push_back(new CoordTracker<3>(pos_out[i], current_parts, CoordTracker<3>::POSITION));
+		if(vel_out[i] != "none")
+			trackers.push_back(new CoordTracker<3>(vel_out[i], current_parts, CoordTracker<3>::VELOCITY));
 	}
 }
 
 void simulate_open_3d(const OptionParser& opts){
 	using namespace treecode;
-	std::vector<Particle<3>* > parts;
-	read_particles_3d(opts, std::back_inserter(parts));
+	part_list_3d parts;
+	tracker_list_3d trackers;
+
+	read_particles_3d(opts, parts, trackers);
 
 	//Read out some params we'll need
 	double theta = opts.get<double>("theta");
 	double force_softening = opts.get<double>("force-softening");
 	double timestep = opts.get<double>("timestep");
 	double max_time = opts.get<double>("max-time");
+	int output_every = opts.get<int>("output-every");
+	std::string energy_file = opts.get<std::string>("energy-out");
 
 	if(opts.count("verbose")){
 		std::cout << "Running a simulation with periodic boundaries" << std::endl;
-		output_common_params(theta, timestep, max_time, force_softening);
+		output_common_params(theta, timestep, max_time, force_softening, energy_file);
 	}
 
 	//Set up simulation
@@ -120,9 +156,8 @@ void simulate_open_3d(const OptionParser& opts){
 	pusher::LeapfrogPusher<3> 			pusher(timestep, bounds, potential);
 	Tree<3>								tree(bounds, parts);
 	TimeIntegrator<3>					integrator(timestep, max_time, parts, tree, bounds, pusher, mac);
-	integrator.setEnergyOutputFile("energies.csv");
-	integrator.addParticleTracker(new output::CoordTracker<3>("positions.csv", parts, output::CoordTracker<3>::POSITION));
-	integrator.addParticleTracker(new output::CoordTracker<3>("velocities.csv", parts, output::CoordTracker<3>::VELOCITY));
+	integrator.setEnergyOutputFile(energy_file.c_str());
+	integrator.addParticleTrackers(trackers.begin(), trackers.end());
 
 	if(opts.count("verbose"))
 		std::cout << "Initialising pusher" << std::endl;
@@ -130,13 +165,14 @@ void simulate_open_3d(const OptionParser& opts){
 
 	if(opts.count("verbose"))
 		std::cout << "Starting time integrator" << std::endl;
-	integrator.start(potentials::quadrupole, 1);
+	integrator.start(potentials::quadrupole, output_every);
 }
 
 void simulate_periodic_3d(const OptionParser& opts){
 	using namespace treecode;
-	std::vector<Particle<3>* > parts;
-	read_particles_3d(opts, std::back_inserter(parts));
+	part_list_3d parts;
+	tracker_list_3d trackers;
+	read_particles_3d(opts, parts, trackers);
 
 	//Read out some params we'll need
 	double theta = opts.get<double>("theta");
@@ -145,10 +181,12 @@ void simulate_periodic_3d(const OptionParser& opts){
 	double max_time = opts.get<double>("max-time");
 	Eigen::Vector3d origin = opts.get<Eigen::VectorXd>("origin");
 	double length = opts.get<double>("length");
+	int output_every = opts.get<int>("output-every");
+	std::string energy_file = opts.get<std::string>("energy-out");
 
 	if(opts.count("verbose")){
 		std::cout << "Running a simulation with open boundaries" << std::endl;
-		output_common_params(theta, timestep, max_time, force_softening);
+		output_common_params(theta, timestep, max_time, force_softening, energy_file);
 		std::cout << std::left << std::setw(20) << "Origin:";
 		for(int i=0;i<origin.rows();i++)
 			std::cout << origin[i] << " ";
@@ -172,9 +210,8 @@ void simulate_periodic_3d(const OptionParser& opts){
 	pusher::LeapfrogPusher<3> 		push(timestep, bounds, open_pot);
 	Tree<3>					tree(bounds, parts);
 	TimeIntegrator<3>		integrator(timestep, max_time, parts, tree, bounds, push, mac);
-	integrator.setEnergyOutputFile("energies.csv");
-	integrator.addParticleTracker(new output::CoordTracker<3>("positions.csv", parts, output::CoordTracker<3>::POSITION));
-	integrator.addParticleTracker(new output::CoordTracker<3>("velocities.csv", parts, output::CoordTracker<3>::VELOCITY));
+	integrator.setEnergyOutputFile(energy_file.c_str());
+	integrator.addParticleTrackers(trackers.begin(), trackers.end());
 
 	if(opts.count("verbose"))
 		std::cout << "Initialising pusher" << std::endl;
@@ -182,7 +219,7 @@ void simulate_periodic_3d(const OptionParser& opts){
 
 	if(opts.count("verbose"))
 		std::cout << "Starting time integrator" << std::endl;
-	integrator.start(potentials::quadrupole, 1);
+	integrator.start(potentials::quadrupole, output_every);
 }
 
 int main(int argc, char **argv){
@@ -206,8 +243,12 @@ int main(int argc, char **argv){
 		("force-softening,f", po::value<double>()->required(), 	"Force softening constant.")
 		("pos-files,p", 	po::value<stringlist>()->multitoken()->required(), 	"File containing positions of particles.")
 		("vel-files,v", 	po::value<stringlist>()->multitoken()->required(), 	"File containing velocities of particles.")
+		("pos-out",			po::value<stringlist>()->multitoken()->required(),	"Position output files")
+		("vel-out",			po::value<stringlist>()->multitoken()->required(), 	"Velocity output files")
+		("energy-out", 		po::value<std::string>()->required(), 				"Energy output file")
 		("masses,m",	po::value<doublelist>()->multitoken()->required(), 	"List of particle masses.")
 		("charges,q",	po::value<intlist>()->multitoken()->required(), 	"List of charges.")
+		("output-every,e", po::value<int>()->default_value(1), 	"Output every arg timesteps")
 	;
 
 	po::options_description periodic_opts("Periodic options");

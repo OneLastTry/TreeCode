@@ -29,7 +29,7 @@ public:
 		VELOCITY
 	};
 
-	CoordTracker(std::string filename, const std::vector<Particle<D>*>& parts, token record):
+	CoordTracker(std::string filename, std::vector<Particle<D>*> parts, token record):
 		ParticleTracker<D>(filename, parts), record_(record){	}
 
 	virtual ~CoordTracker(){}

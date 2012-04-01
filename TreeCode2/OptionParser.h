@@ -106,7 +106,11 @@ public:
 			std::cerr << "Required option '" << re.get_option_name() << "' not supplied." << std::endl;
 			std::cerr << "Use --help for a list of all options." << std::endl;
 			exit(1);
-		}catch(po::error& e){
+		}catch(po::invalid_option_value& ie){
+			std::cerr << ie.what() << std::endl;
+			exit(1);
+		}
+		catch(po::error& e){
 			std::cerr << e.what() << std::endl;
 			exit(1);
 		}

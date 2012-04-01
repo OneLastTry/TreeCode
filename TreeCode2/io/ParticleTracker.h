@@ -22,7 +22,7 @@ class ParticleTracker{
 
 public:
 
-	ParticleTracker(std::string filename, const std::vector<Particle<D>*>& parts):
+	ParticleTracker(std::string filename, std::vector<Particle<D>*> parts):
 		parts_(parts){
 		if(filename.compare("stdout") == 0)
 			out_ = &std::cout;
@@ -42,7 +42,7 @@ public:
 	virtual void output() = 0;
 protected:
 	std::ostream* out_;
-	const std::vector<Particle<D>* >& parts_;
+	std::vector<Particle<D>* > parts_;
 };
 
 }//output namespace
