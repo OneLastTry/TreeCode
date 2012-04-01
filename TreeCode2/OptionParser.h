@@ -102,8 +102,13 @@ public:
 			}
 			//Call notify -- this will cause exceptions to be thrown, etc
 			po::notify(vm_);
+		}catch(po::required_option& re){
+			std::cerr << "Required option '" << re.get_option_name() << "' not supplied." << std::endl;
+			std::cerr << "Use --help for a list of all options." << std::endl;
+			exit(1);
 		}catch(po::error& e){
 			std::cerr << e.what() << std::endl;
+			exit(1);
 		}
 	}
 

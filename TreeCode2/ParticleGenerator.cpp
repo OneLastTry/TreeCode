@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
 	int random_seed;
 
 	OptionParser opts("Options");
+	opts.setUsesConfigFile(true);
 	//Main variables. These don't depend on anything else, and are mandatory
 	po::options_description main_opts("Main options");
 	main_opts.add_options()
