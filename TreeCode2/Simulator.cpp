@@ -202,7 +202,7 @@ void simulate_periodic_3d(const OptionParser& opts){
 	BarnesHutMAC<3>		mac(theta, bounds);
 	potentials::CoulombForceThreeD<3> 			open_pot(force_softening, bounds);
 	potentials::EwaldForce<3>			periodic_pot(force_softening, bounds, 2.0 / length, rs_its, fs_its);
-	potentials::InterpolatedEwaldSum<3>	potential(force_softening, bounds, 20, periodic_pot, open_pot);
+	potentials::InterpolatedEwaldSum<3>	potential(force_softening, bounds, 40, periodic_pot, open_pot);
 	if(opts.count("verbose"))
 		std::cout << "Initialising potential grid" << std::endl;
 	potential.init();

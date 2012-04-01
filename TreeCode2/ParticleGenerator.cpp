@@ -45,11 +45,21 @@ int main(int argc, char **argv) {
 	    ("num-particles,N", po::value<int>(&num_particles)->required(), "Number of particles")
 	    ("origin,O", 		po::value<Eigen::VectorXd>(&origin_vector)->required(), "Origin of system")
 	    ("length,L", 		po::value<double>(&length)->required(), "Length of system")
-	    ("pos-dist,p",		po::value<std::string>(&pos_dist_str)->required(), "Position distribution")
-	    ("vel-dist,v",		po::value<std::string>(&vel_dist_str)->required(), "Velocity distribution")
+	    ("pos-dist,p",		po::value<std::string>(&pos_dist_str)->required(), "Position distribution: uniform, spherical or sinusoidal")
+	    ("vel-dist,v",		po::value<std::string>(&vel_dist_str)->required(), "Velocity distribution: maxwell or constant")
 	    ("pos-out,P",		po::value<std::string>(&pos_out_str)->required(), "Position output file")
 	    ("vel-out,V",		po::value<std::string>(&vel_out_str)->required(), "Velocity output file")
 	    ("seed,s",			po::value<int>(&random_seed)->required(), "Random seed")
+	;
+
+	//Options that only apply to the sinusoidal distirbution
+	double wavelengths, phase;
+	int dimension;
+	po::options_description sinusoidal_opts("Sinusoidal distribution options");
+	sinusoidal_opts.add_options()
+		("dimension", 	po::value<int>(&dimension)->default_value(0), 	"Dimension to oscillate in: x=0, y=1, z=2")
+		("wavelengths", po::value<double>(&wavelengths)->default_value(1), 	"Number of wavelengths in the distribution")
+		("phase", 		po::value<double>(&phase)->default_value(M_PI/2), "Phase offset of distribution")
 	;
 
 	//Options that only apply when using a maxwell distribution
@@ -67,7 +77,7 @@ int main(int argc, char **argv) {
 	;
 
 	//Read options int vm
-	opts.add(main_opts).add(maxwell_opts).add(const_opts);
+	opts.add(main_opts).add(sinusoidal_opts).add(maxwell_opts).add(const_opts);
 	opts.parse(argc, argv);
 
 	//Initialise output streams
@@ -87,6 +97,8 @@ int main(int argc, char **argv) {
 		pos_dist = new UniformDistribution<mt19937>(rng, origin_vector, origin_vector.array() + length);
 	else if(pos_dist_str == "spherical")
 		pos_dist = new SphericalDistribution<mt19937>(rng, origin_vector.rows(), origin_vector, length);
+	else if(pos_dist_str == "sinusoidal")
+		pos_dist = new SinusoidalDistribution<mt19937>(rng, dimension, origin_vector, origin_vector.array()+length, wavelengths, phase);
 	else{
 		std::cerr << "Position distribution must be 'uniform' or 'spherical'." << std::endl;
 		exit(1);

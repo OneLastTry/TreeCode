@@ -66,8 +66,6 @@ public:
 	void start(potentials::Precision precision, unsigned int output_every){
 		long int num_steps = max_time_/dt_;
 		for(long int i=0;i<num_steps;i++){
-			if(i == 2526)
-				std::cout << " ";
 
 			std::pair<double, double> energies = pusher_.push_particles(particles_, tree_, bounds_, precision, mac_);
 			bounds_.timestepOver();
