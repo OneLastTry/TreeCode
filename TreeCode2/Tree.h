@@ -52,9 +52,12 @@ public:
 	 * @brief Causes a new quad/oct-tree to be generated.
 	 */
 	void rebuild(){
-		//Just update the root's size and origin and split it again
-		root->setPosition(boundary.getOrigin());
-		root->setSize(boundary.getSize());
+		delete root;
+		//Test memory usage if deleting root at each timestep
+		root = new Node<D>(boundary.getOrigin(), boundary.getSize());
+		//Populate with particles, and gently inform the node it is root
+		root->setParticles(particles);
+		root->setStatus(Node<D>::ROOT);
 		root->split();
 	}
 
