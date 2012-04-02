@@ -76,7 +76,7 @@ public:
 		std::vector<Particle<D>* > parts;
 
 		//Skip timestep_offset lines
-		while(timestep_offset-- > 0 && !pos_input_->eof() && !vel_input_->eof()){
+		while(timestep_offset > 0 && !pos_input_->eof() && !vel_input_->eof()){
 			pos_input_->ignore(10000000, '\n');
 			pos_input_->unget();
 			vel_input_->ignore(10000000, '\n');

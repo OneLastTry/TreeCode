@@ -32,6 +32,7 @@ int main(int argc, char **argv){
 		("speeds", "Output speeds of all particles")
 		("coll-time", "Produce a graph of average deviated angle against time")
 		("radial-density", "Produce plot of radial density")
+		("temperature", "Display temperature")
 	;
 	po::options_description compulsory("Compulsory arguments");
 	compulsory.add_options()
@@ -47,6 +48,7 @@ int main(int argc, char **argv){
 		("timestep,t", po::value<int>()->default_value(0), "Timestep to examine")
 		("origin", po::value<Eigen::VectorXd>(), "Origin of system")
 		("bin-width", po::value<double>(), "Bin width")
+		("quiet",  "Don't display extra output")
 	;
 	opts.add(actions).add(compulsory).add(optional);
 	opts.parse(argc, argv);
@@ -67,7 +69,7 @@ int main(int argc, char **argv){
 	}else if(opts.count("coll-time")){
 		ParticleReader<3> reader(pos_file.c_str(), vel_file.c_str(), mass, charge);
 		//Read initial particles
-		part_list_3d initial_parts = reader.readParticles(0);
+		part_list_3d initial_parts = reader.readParticles(timestep);
 		//Then just keep reading until we run out of particles
 		part_list_3d parts;
 		while(!reader.eof()){
@@ -109,6 +111,29 @@ int main(int argc, char **argv){
 		for ( it=histogram.begin() ; it != histogram.end(); it++ ){
 		    std::cout << (it->first*bin_width)  << "\t" << it->second << std::endl;
 		}
+	}else if(opts.count("temperature")){
+		ParticleReader<3> reader(pos_file.c_str(), vel_file.c_str(), mass, charge);
+		part_list_3d parts = reader.readParticles(timestep);
+		int size = parts.size();
+		//Find mean velocity:
+		Eigen::Vector3d mean_vel = Eigen::Vector3d::Zero();
+		for(int i=0;i<size;i++)
+			mean_vel += parts[i]->getVelocity() / size;
+		//Find temperature:
+		double T = 0;
+		for(int i=0;i<size;i++){
+			Eigen::Vector3d random_vel = parts[i]->getVelocity() - mean_vel;
+			T += parts[i]->getMass() * random_vel.squaredNorm() / 3 / size;
+		}
+
+		if(!opts.count("quiet")){
+			std::cout << "Mean velocity: ";
+			for(int i=0;i<mean_vel.rows();i++)
+				std::cout << mean_vel[i] << "\t";
+		std::cout << std::endl;
+		std::cout << "Temperature: ";
+		}
+		std::cout << T << std::endl;
 	}
 
 	return 0;
