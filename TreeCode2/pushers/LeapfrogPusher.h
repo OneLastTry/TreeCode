@@ -103,8 +103,6 @@ public:
 		//Now push the velocity
 		tree.rebuild();
 
-	//	for(Particle* p : parts){
-	//	std::for_each(parts.begin(), parts.end(), [&tree,this,&precision] (Particle* p){
 		#pragma omp parallel for reduction(+:ke,pe) schedule(dynamic)
 		for(unsigned int i=0;i<parts.size();i++){
 			Particle<D>* p = parts[i];
