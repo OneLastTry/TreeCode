@@ -144,7 +144,7 @@ void simulate_open_3d(const OptionParser& opts){
 	std::string energy_file = opts.get<std::string>("energy-out");
 
 	if(opts.count("verbose")){
-		std::cout << "Running a simulation with periodic boundaries" << std::endl;
+		std::cout << "Running a simulation with open boundaries" << std::endl;
 		output_common_params(theta, timestep, max_time, force_softening, energy_file);
 	}
 
@@ -191,7 +191,7 @@ void simulate_periodic_3d(const OptionParser& opts){
 	std::string energy_file = opts.get<std::string>("energy-out");
 
 	if(opts.count("verbose")){
-		std::cout << "Running a simulation with open boundaries" << std::endl;
+		std::cout << "Running a simulation with periodic boundaries" << std::endl;
 		output_common_params(theta, timestep, max_time, force_softening, energy_file);
 		std::cout << std::left << std::setw(20) << "Origin:";
 		for(int i=0;i<origin.rows();i++)
