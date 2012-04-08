@@ -38,7 +38,7 @@ public:
 	 * @param vel	Velocity.
 	 * @param id	A unique global ID (for data storage).
 	 */
-	Particle(int q, int m, const Vec& pos, const Vec& vel) :
+	Particle(double q, double m, const Vec& pos, const Vec& vel) :
 			charge(q), mass(m), position(pos), velocity(vel){}
 
 	/**
@@ -51,23 +51,23 @@ public:
 	 * @brief Get charge on particle.
 	 * @return	Particle charge.
 	 */
-    int getCharge() const{return charge;}
+    double getCharge() const{return charge;}
     /**
      * @brief Set charge on particle.
      * @param charge Charge to set to.
      */
-    void setCharge(int charge){this->charge = charge;}
+    void setCharge(double charge){this->charge = charge;}
 
     /**
      * @brief Get mass of particle.
      * @return	Mass of particle.
      */
-    int getMass() const{return mass;}
+    double getMass() const{return mass;}
     /**
      * @brief Set mass of particle.
      * @param mass	Mass to set to.
      */
-    void setMass(int mass){this->mass = mass;}
+    void setMass(double mass){this->mass = mass;}
 
     /**
      * @brief Get position of particle.
@@ -152,7 +152,7 @@ public:
     }
 
 private:
-	int charge, mass;
+	double charge, mass;
 	Vec position, velocity;
 };
 

@@ -77,7 +77,7 @@ simulator_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(CXXFLAGS) $(simulator_LDFLAGS) $(LDFLAGS) -o $@
 am_treecode_tests_OBJECTS = custom_asserts.$(OBJEXT) \
 	ParticleTest.$(OBJEXT) TreeTest.$(OBJEXT) IOTest.$(OBJEXT) \
-	DistributionTest.$(OBJEXT)
+	DistributionTest.$(OBJEXT) PusherTest.$(OBJEXT)
 treecode_tests_OBJECTS = $(am_treecode_tests_OBJECTS)
 treecode_tests_DEPENDENCIES = $(am__DEPENDENCIES_1)
 treecode_tests_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -137,11 +137,11 @@ CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
 CPP = gcc -E
-CPPFLAGS = -fopenmp -O3 -I/usr/include/eigen3/
+CPPFLAGS = -fopenmp -I/usr/include/eigen3/
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -O3 -fopenmp -ffast-math
+CXXFLAGS = -O3 -g -march=native -fopenmp
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -260,7 +260,8 @@ treecode_tests_SOURCES = TreeCode2/tests/custom_asserts.cpp \
 						 TreeCode2/tests/ParticleTest.cpp \
 						 TreeCode2/tests/TreeTest.cpp \
 						 TreeCode2/tests/IOTest.cpp \
-						 TreeCode2/tests/DistributionTest.cpp
+						 TreeCode2/tests/DistributionTest.cpp \
+						 TreeCode2/tests/PusherTest.cpp
 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -392,6 +393,7 @@ include ./$(DEPDIR)/DistributionTest.Po
 include ./$(DEPDIR)/IOTest.Po
 include ./$(DEPDIR)/ParticleGenerator.Po
 include ./$(DEPDIR)/ParticleTest.Po
+include ./$(DEPDIR)/PusherTest.Po
 include ./$(DEPDIR)/Simulator.Po
 include ./$(DEPDIR)/TreeTest.Po
 include ./$(DEPDIR)/custom_asserts.Po
@@ -528,6 +530,20 @@ DistributionTest.obj: TreeCode2/tests/DistributionTest.cpp
 #	source='TreeCode2/tests/DistributionTest.cpp' object='DistributionTest.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
 #	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o DistributionTest.obj `if test -f 'TreeCode2/tests/DistributionTest.cpp'; then $(CYGPATH_W) 'TreeCode2/tests/DistributionTest.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/tests/DistributionTest.cpp'; fi`
+
+PusherTest.o: TreeCode2/tests/PusherTest.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT PusherTest.o -MD -MP -MF $(DEPDIR)/PusherTest.Tpo -c -o PusherTest.o `test -f 'TreeCode2/tests/PusherTest.cpp' || echo '$(srcdir)/'`TreeCode2/tests/PusherTest.cpp
+	$(am__mv) $(DEPDIR)/PusherTest.Tpo $(DEPDIR)/PusherTest.Po
+#	source='TreeCode2/tests/PusherTest.cpp' object='PusherTest.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o PusherTest.o `test -f 'TreeCode2/tests/PusherTest.cpp' || echo '$(srcdir)/'`TreeCode2/tests/PusherTest.cpp
+
+PusherTest.obj: TreeCode2/tests/PusherTest.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT PusherTest.obj -MD -MP -MF $(DEPDIR)/PusherTest.Tpo -c -o PusherTest.obj `if test -f 'TreeCode2/tests/PusherTest.cpp'; then $(CYGPATH_W) 'TreeCode2/tests/PusherTest.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/tests/PusherTest.cpp'; fi`
+	$(am__mv) $(DEPDIR)/PusherTest.Tpo $(DEPDIR)/PusherTest.Po
+#	source='TreeCode2/tests/PusherTest.cpp' object='PusherTest.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o PusherTest.obj `if test -f 'TreeCode2/tests/PusherTest.cpp'; then $(CYGPATH_W) 'TreeCode2/tests/PusherTest.cpp'; else $(CYGPATH_W) '$(srcdir)/TreeCode2/tests/PusherTest.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

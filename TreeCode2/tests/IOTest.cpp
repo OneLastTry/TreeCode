@@ -30,14 +30,14 @@
  */
 template <int D>
 struct IOFixture {
-	IOFixture():pos_file("ion_pos.csv"), vel_file("ion_vel.csv"){
+	IOFixture():pos_file("iotest_ion_pos.csv"), vel_file("iotest_ion_vel.csv"){
 		using boost::random::mt19937;
 		using namespace treecode;
 		using namespace treecode::distribution;
 		typedef Eigen::Vector3d V;
 
 		double length = 1.0;
-		unsigned int num_particles = 1000;
+		unsigned int num_particles = 2;
 		mt19937 rng;
 
 		//Create distributions
@@ -93,6 +93,7 @@ BOOST_AUTO_TEST_CASE(WriteRead){
 }
 
 //Test reading failures
+
 BOOST_AUTO_TEST_CASE(IOFail){
 	using namespace treecode;
 	//Write some particles
@@ -111,6 +112,8 @@ BOOST_AUTO_TEST_CASE(IOFail){
 	//Write the velocity file again, with one fewer particle :
 	std::vector<Particle<3>* > one_fewer;
 	one_fewer.insert(one_fewer.end(), ions.begin(), ions.end()-1);
+
+	//Wrap in scope block so destructor of CoordTracker is called
 	{
 		output::CoordTracker<3> ion_vel_tracker(vel_file, one_fewer, output::CoordTracker<3>::VELOCITY);
 		ion_vel_tracker.output();
@@ -124,8 +127,8 @@ BOOST_AUTO_TEST_CASE(IOFail){
 	//Do it again, with one fewer position
 	{
 		write_particles();
-		output::CoordTracker<3> ion_vel_tracker(vel_file, one_fewer, output::CoordTracker<3>::POSITION);
-		ion_vel_tracker.output();
+		output::CoordTracker<3> ion_pos_tracker(pos_file, one_fewer, output::CoordTracker<3>::POSITION);
+		ion_pos_tracker.output();
 	}
 	io::ParticleReader<3> ion_reader2(pos_file, vel_file, 1837, 1);
 	BOOST_REQUIRE_THROW(
@@ -133,5 +136,6 @@ BOOST_AUTO_TEST_CASE(IOFail){
 			io::ReadError
 			);
 }
+
 
 BOOST_AUTO_TEST_SUITE_END();

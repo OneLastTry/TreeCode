@@ -49,6 +49,10 @@ public:
 		}
 		(*(parent::out_)) << std::endl;
 	}
+
+	void flush(){
+		ParticleTracker<D>::out_->flush();
+	}
 protected:
 	token record_;
 };

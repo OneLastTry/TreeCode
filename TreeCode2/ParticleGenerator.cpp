@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
 
 	//Variables to be set by program_options
 	std::string pos_dist_str, vel_dist_str;
-	std::string pos_out_str, vel_out_str;\
+	std::string pos_out_str, vel_out_str;
 	Eigen::VectorXd origin_vector, const_vel_vector;
 	double length;
 	int num_particles;

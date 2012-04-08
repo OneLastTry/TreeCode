@@ -21,4 +21,5 @@ treecode_tests_SOURCES = TreeCode2/tests/custom_asserts.cpp \
 						 TreeCode2/tests/ParticleTest.cpp \
 						 TreeCode2/tests/TreeTest.cpp \
 						 TreeCode2/tests/IOTest.cpp \
-						 TreeCode2/tests/DistributionTest.cpp
+						 TreeCode2/tests/DistributionTest.cpp \
+						 TreeCode2/tests/PusherTest.cpp

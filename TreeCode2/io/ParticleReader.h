@@ -101,6 +101,11 @@ public:
 			if(index == 0)
 				parts.push_back(new treecode::Particle<D>(charge_, mass_, pos, vel));
 		}
+		double d;
+		if(pos_ss >> d)
+			throw ReadError("Reached end of velocity record before end of position record.");
+		if(vel_ss >> d)
+			throw ReadError("Reached end of position record before end of velocity record.");
 		return parts;
 	}
 
