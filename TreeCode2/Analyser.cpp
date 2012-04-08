@@ -72,7 +72,7 @@ int main(int argc, char **argv){
 		part_list_3d initial_parts = reader.readParticles(timestep);
 		//Then just keep reading until we run out of particles
 		part_list_3d parts;
-		while(!reader.eof()){
+		do{
 			parts = reader.readParticles();
 			//Average angle for this timestep
 			double average = 0;
@@ -83,7 +83,7 @@ int main(int argc, char **argv){
 				average += acos(init_vel.dot(curr_vel)) / size;
 			}
 			std::cout << average << std::endl;
-		}
+		}while(!reader.eof());
 	}else if(opts.count("radial-density")){
 		Eigen::VectorXd origin;
 		double bin_width;
@@ -115,25 +115,28 @@ int main(int argc, char **argv){
 		ParticleReader<3> reader(pos_file.c_str(), vel_file.c_str(), mass, charge);
 		part_list_3d parts = reader.readParticles(timestep);
 		int size = parts.size();
-		//Find mean velocity:
-		Eigen::Vector3d mean_vel = Eigen::Vector3d::Zero();
-		for(int i=0;i<size;i++)
-			mean_vel += parts[i]->getVelocity() / size;
-		//Find temperature:
-		double T = 0;
-		for(int i=0;i<size;i++){
-			Eigen::Vector3d random_vel = parts[i]->getVelocity() - mean_vel;
-			T += parts[i]->getMass() * random_vel.squaredNorm() / 3 / size;
-		}
 
-		if(!opts.count("quiet")){
-			std::cout << "Mean velocity: ";
+		do {
+			//Find mean velocity:
+			Eigen::Vector3d mean_vel = Eigen::Vector3d::Zero();
+			for(int i=0;i<size;i++)
+				mean_vel += parts[i]->getVelocity() / size;
+			//Find temperature:
+			double T = 0;
+			for(int i=0;i<size;i++){
+				Eigen::Vector3d random_vel = parts[i]->getVelocity() - mean_vel;
+				T += parts[i]->getMass() * random_vel.squaredNorm() / 3 / size;
+			}
+
+			if(!opts.count("quiet")){
+				std::cout << "Mean velocity, temperature ";
+			}
+			std::cout << timestep++ << "\t";
 			for(int i=0;i<mean_vel.rows();i++)
 				std::cout << mean_vel[i] << "\t";
-		std::cout << std::endl;
-		std::cout << "Temperature: ";
-		}
-		std::cout << T << std::endl;
+			std::cout << T << std::endl;
+			parts = reader.readParticles();
+		}while(!reader.eof());
 	}
 
 	return 0;

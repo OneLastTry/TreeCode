@@ -137,11 +137,11 @@ CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
 CPP = gcc -E
-CPPFLAGS = -fopenmp -I/usr/include/eigen3/
+CPPFLAGS =  -I/usr/include/eigen3/
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -O3 -g -march=native -fopenmp
+CXXFLAGS = -march=native -m64 -msse2 -Ofast -flto=6 -fwhole-program -ffast-math -fopenmp -funroll-loops
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
