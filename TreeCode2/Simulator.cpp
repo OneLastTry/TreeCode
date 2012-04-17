@@ -27,6 +27,7 @@
 #include <potentials/EwaldForce.h>
 #include <potentials/InterpolatedEwaldSum.h>
 #include <potentials/CoulombForceEField.h>
+#include <potentials/DampingCoulombForce.h>
 //MAC
 #include <macs/BarnesHutMAC.h>
 //Integrator
@@ -154,10 +155,12 @@ void simulate_open_3d(const OptionParser& opts){
 
 	BarnesHutMAC<3>						mac(theta, bounds);
 	potentials::CoulombForceThreeD<3> 	*potential;
-	if(!opts.count("electric-field"))
-		potential = new potentials::CoulombForceThreeD<3>(force_softening, bounds);
-	else
+	if(opts.count("electric-field"))
 		potential = new potentials::CoulombForceEField<3>(force_softening, bounds, opts.get<Eigen::VectorXd>("electric-field"));
+	else if(opts.count("damping"))
+		potential = new potentials::DampingCoulombForce<3>(force_softening, bounds, opts.get<double>("damping"));
+	else
+		potential = new potentials::CoulombForceThreeD<3>(force_softening, bounds);
 
 	pusher::LeapfrogPusher<3> 			pusher(timestep, bounds, *potential);
 	Tree<3>								tree(bounds, parts);
@@ -172,6 +175,8 @@ void simulate_open_3d(const OptionParser& opts){
 	if(opts.count("verbose"))
 		std::cout << "Starting time integrator" << std::endl;
 	integrator.start(potentials::quadrupole, output_every);
+
+	delete potential;
 }
 
 void simulate_periodic_3d(const OptionParser& opts){
@@ -207,10 +212,13 @@ void simulate_periodic_3d(const OptionParser& opts){
 	PeriodicBoundary<3>		bounds(origin, length);
 	BarnesHutMAC<3>		mac(theta, bounds);
 	potentials::CoulombForceThreeD<3> *open_pot;
-	if(!opts.count("electric-field"))
-		open_pot = new potentials::CoulombForceThreeD<3>(force_softening, bounds);
-	else
+	if(opts.count("electric-field"))
 		open_pot = new potentials::CoulombForceEField<3>(force_softening, bounds, opts.get<Eigen::VectorXd>("electric-field"));
+	else if(opts.count("damping"))
+		open_pot = new potentials::DampingCoulombForce<3>(force_softening, bounds, opts.get<double>("damping"));
+	else
+		open_pot = new potentials::CoulombForceThreeD<3>(force_softening, bounds);
+
 
 	potentials::EwaldForce<3>			periodic_pot(force_softening, bounds, 2.0 / length, rs_its, fs_its);
 	potentials::InterpolatedEwaldSum<3>	potential(force_softening, bounds, 40, periodic_pot, *open_pot);
@@ -260,6 +268,7 @@ int main(int argc, char **argv){
 		("theta,o",		po::value<double>()->required(),		"Critical opening angle.")
 		("force-softening,f", po::value<double>()->required(), 	"Force softening constant.")
 		("electric-field,E",po::value<Eigen::VectorXd>(), 		"Electric field (if any)")
+		("damping,D",		po::value<double>(),				"Damping (if any)")
 		("pos-files,p", 	po::value<stringlist>()->multitoken()->required(), 	"File containing positions of particles.")
 		("vel-files,v", 	po::value<stringlist>()->multitoken()->required(), 	"File containing velocities of particles.")
 		("pos-out",			po::value<stringlist>()->multitoken()->required(),	"Position output files")
