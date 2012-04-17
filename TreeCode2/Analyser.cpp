@@ -33,6 +33,8 @@ int main(int argc, char **argv){
 		("coll-time", "Produce a graph of average deviated angle against time")
 		("radial-density", "Produce plot of radial density")
 		("temperature", "Display temperature")
+		("track-position", "Print position of particle specified by --particle between timesteps --timestep and --timestep + --limit.")
+		("position-snapshot", "Print a snapshot of the positions.")
 	;
 	po::options_description compulsory("Compulsory arguments");
 	compulsory.add_options()
@@ -48,6 +50,8 @@ int main(int argc, char **argv){
 		("timestep,t", po::value<int>()->default_value(0), "Timestep to examine")
 		("origin", po::value<Eigen::VectorXd>(), "Origin of system")
 		("bin-width", po::value<double>(), "Bin width")
+		("particle", po::value<int>()->default_value(0), "Particle index")
+		("limit", po::value<int>(), "Number of records to display")
 		("quiet",  "Don't display extra output")
 	;
 	opts.add(actions).add(compulsory).add(optional);
@@ -59,7 +63,29 @@ int main(int argc, char **argv){
 	int charge = opts.get<int>("charge");
 	int timestep = opts.get<int>("timestep");
 
-	if(opts.count("speeds")){
+	if(opts.count("track-position")){
+		ParticleReader<3> reader(pos_file.c_str(), vel_file.c_str(), mass, charge);
+		int index = 0;
+		do{
+			part_list_3d parts = reader.readParticles(timestep);
+			int index = opts.get<int>("particle");
+			for(int i=0;i<3;i++)
+				std::cout<< parts[index]->getPosition()[i] << "\t";
+			std::cout << std::endl;
+			index++;
+			if(opts.count("limit") && index > opts.get<int>("limit"))
+				break;
+		}while(!reader.eof());
+
+	}else if(opts.count("position-snapshot")){
+		ParticleReader<3> reader(pos_file.c_str(), vel_file.c_str(), mass, charge);
+		part_list_3d parts = reader.readParticles(timestep);
+		for(int j=0;j<parts.size();j++){
+			for(int i=0;i<3;i++)
+				std::cout<< parts[j]->getPosition()[i] << "\t";
+			std::cout << std::endl;
+		}
+	}else if(opts.count("speeds")){
 		ParticleReader<3> reader(pos_file.c_str(), vel_file.c_str(), mass, charge);
 		part_list_3d parts = reader.readParticles(timestep);
 		int size = parts.size();
