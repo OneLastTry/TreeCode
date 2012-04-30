@@ -35,6 +35,8 @@ int main(int argc, char **argv){
 		("temperature", "Display temperature")
 		("track-position", "Print position of particle specified by --particle between timesteps --timestep and --timestep + --limit.")
 		("position-snapshot", "Print a snapshot of the positions.")
+		("linear-number", "Print a histogram of number of particles per --bin-width in --direction.")
+		("particles-in-bin", "Count number of particles between --bin-min and --bin-max in --direction.");
 	;
 	po::options_description compulsory("Compulsory arguments");
 	compulsory.add_options()
@@ -52,6 +54,9 @@ int main(int argc, char **argv){
 		("bin-width", po::value<double>(), "Bin width")
 		("particle", po::value<int>()->default_value(0), "Particle index")
 		("limit", po::value<int>(), "Number of records to display")
+		("direction", po::value<int>(), "Dimension in which to generate linear histogram.")
+		("bin-min", po::value<double>(), "Minimum value for bin.")
+		("bin-max", po::value<double>(), "Maximum value for bin.")
 		("quiet",  "Don't display extra output")
 	;
 	opts.add(actions).add(compulsory).add(optional);
@@ -163,6 +168,62 @@ int main(int argc, char **argv){
 			std::cout << T << std::endl;
 			parts = reader.readParticles();
 		}while(!reader.eof());
+	}else if(opts.count("linear-number")){
+		Eigen::VectorXd origin;
+		double bin_width;
+		int dim;
+		try{
+			 origin = opts.get<Eigen::VectorXd>("origin");
+			 bin_width = opts.get<double>("bin-width");
+			 dim = opts.get<int>("direction");
+		}catch(...){
+			std::cerr << "You must specify the origin, bin width and direction when plotting a linear histogram" << std::endl;
+			exit(1);
+		}
+
+		ParticleReader<3> reader(pos_file.c_str(), vel_file.c_str(), mass, charge);
+		part_list_3d parts = reader.readParticles(timestep);
+		//Bin index, number of particles
+		std::map<int, int> histogram;
+		int size = parts.size();
+		for(int i=0;i<size;i++){
+			double r = (parts[i]->getPosition()[dim] - origin[dim]);
+			int bin = r / bin_width;
+			//Volume of shell
+			double vol =
+			histogram[bin] += 1;
+		}
+
+		std::map<int,int>::iterator it;
+		for ( it=histogram.begin() ; it != histogram.end(); it++ ){
+		    std::cout << (it->first*bin_width)  << "\t" << it->second << std::endl;
+		}
+	}else if(opts.count("particles-in-bin")){
+		Eigen::VectorXd origin;
+		double bin_min, bin_max;
+		int dim;
+		try{
+			 bin_min = opts.get<double>("bin-min");
+			 bin_max = opts.get<double>("bin-max");
+			 dim = opts.get<int>("direction");
+		}catch(...){
+			std::cerr << "You must specify --bin-min, --bin-max and --direction when using --particles-in-bin" << std::endl;
+			exit(1);
+		}
+
+		ParticleReader<3> reader(pos_file.c_str(), vel_file.c_str(), mass, charge);
+		part_list_3d parts = reader.readParticles(timestep);
+		while(!reader.eof()){
+			//Bin index, number of particles
+			int n = 0;
+			for(int i=0;i<parts.size();i++){
+				double r = parts[i]->getPosition()[dim];
+				if(r > bin_min && r < bin_max)
+					n++;
+			}
+			std::cout << n << std::endl;
+			parts = reader.readParticles();
+		}
 	}
 
 	return 0;
